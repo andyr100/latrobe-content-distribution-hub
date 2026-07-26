@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { appConfig } from "@/config/app";
 import { AppShell } from "@/components/layout/AppShell";
 import { PreferencesProvider } from "@/context/PreferencesContext";
+import { SessionProvider } from "@/context/SessionContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,7 +46,7 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <PreferencesProvider><AppShell>{children}</AppShell></PreferencesProvider>
+        <PreferencesProvider><SessionProvider><AppShell>{children}</AppShell></SessionProvider></PreferencesProvider>
       </body>
     </html>
   );
