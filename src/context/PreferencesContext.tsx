@@ -5,19 +5,23 @@ import { createContext, useContext, useEffect, useReducer, type ReactNode } from
 export type ThemePreference = "light" | "dark" | "system";
 const STORAGE_KEY = "lt-content-hub.preferences.v1";
 
-type State = { theme: ThemePreference; subscriptions: string[] };
+type PersistedState = { theme: ThemePreference; subscriptions: string[] };
+type State = PersistedState & { hydrated: boolean };
 type Action =
-  | { type: "hydrate"; state: State }
+  | { type: "hydrate"; state: PersistedState }
   | { type: "setTheme"; theme: ThemePreference }
-  | { type: "toggleSubscription"; id: string };
+  | { type: "toggleSubscription"; id: string }
+  | { type: "reset" };
 
 const initialState: State = {
   theme: "system",
   subscriptions: ["microsoft-ai", "aws-news", "google-developers", "stack-overflow", "higher-education"],
+  hydrated: false,
 };
 
 function reducer(state: State, action: Action): State {
-  if (action.type === "hydrate") return action.state;
+  if (action.type === "hydrate") return { ...action.state, hydrated: true };
+  if (action.type === "reset") return { ...initialState, hydrated: true };
   if (action.type === "setTheme") return { ...state, theme: action.theme };
   if (action.type === "toggleSubscription") {
     return {
@@ -34,6 +38,7 @@ type PreferencesValue = State & {
   resolvedTheme: "light" | "dark";
   setTheme: (theme: ThemePreference) => void;
   toggleSubscription: (id: string) => void;
+  resetPreferences: () => void;
 };
 
 const PreferencesContext = createContext<PreferencesValue | null>(null);
@@ -44,26 +49,29 @@ function resolveTheme(theme: ThemePreference) {
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState, (fallback) => {
-    if (typeof window === "undefined") return fallback;
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  useEffect(() => {
     try {
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "");
       const validTheme = ["light", "dark", "system"].includes(stored?.theme);
-      return {
-        theme: validTheme ? stored.theme : fallback.theme,
-        subscriptions: Array.isArray(stored?.subscriptions) ? stored.subscriptions : fallback.subscriptions,
-      };
+      dispatch({ type: "hydrate", state: {
+        theme: validTheme ? stored.theme : initialState.theme,
+        subscriptions: Array.isArray(stored?.subscriptions) ? stored.subscriptions : initialState.subscriptions,
+      } });
     } catch {
-      return fallback;
+      dispatch({ type: "hydrate", state: { theme: initialState.theme, subscriptions: initialState.subscriptions } });
     }
-  });
-  const resolvedTheme = typeof window === "undefined" ? "light" : resolveTheme(state.theme);
+  }, []);
+
+  const resolvedTheme = !state.hydrated || typeof window === "undefined" ? "light" : resolveTheme(state.theme);
 
   useEffect(() => {
+    if (!state.hydrated) return;
     const root = document.documentElement;
     const apply = () => root.dataset.theme = resolveTheme(state.theme);
     apply();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme: state.theme, subscriptions: state.subscriptions }));
     if (state.theme !== "system") return;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     media.addEventListener("change", apply);
@@ -77,6 +85,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
         resolvedTheme,
         setTheme: (theme) => dispatch({ type: "setTheme", theme }),
         toggleSubscription: (id) => dispatch({ type: "toggleSubscription", id }),
+        resetPreferences: () => dispatch({ type: "reset" }),
       }}
     >
       {children}
