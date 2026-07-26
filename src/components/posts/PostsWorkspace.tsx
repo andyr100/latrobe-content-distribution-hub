@@ -13,6 +13,7 @@ import { classifications, externalArticles, feedSources } from "@/data/mockData"
 import { users } from "@/data/users";
 import { PublishComposer } from "@/components/publishing/PublishComposer";
 import type { ExternalArticle } from "@/types";
+import { useSession } from "@/context/SessionContext";
 
 function formatDate(value: string) { return new Intl.DateTimeFormat("en-AU", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)); }
 
@@ -27,6 +28,7 @@ export function PostsWorkspace() {
   const [expanded, setExpanded] = useState<string[]>([]);
   const [composer, setComposer] = useState<ExternalArticle | "internal" | null>(params.get("create") === "1" ? "internal" : null);
   const { posts, channels } = useContent();
+  const { selectedUser } = useSession();
   const { subscriptions } = usePreferences();
 
   const internal = useMemo(() => posts.filter((post) =>
@@ -65,7 +67,7 @@ export function PostsWorkspace() {
           external.map((article) => { const feed = feedSources.find((item) => item.id === article.feedId)!; const open = expanded.includes(article.id); return <GlassCard key={article.id} className="p-5 sm:p-6"><div className="flex flex-wrap items-center gap-2"><Badge tone="cyan">{feed.name}</Badge><Badge>{article.classification}</Badge></div><h2 className="mt-3 text-xl font-bold tracking-[-.02em]">{article.title}</h2><p className="muted mt-2 text-sm">{formatDate(article.publishedAt)}</p><p id={`summary-${article.id}`} className={`mt-4 max-w-4xl leading-7 text-[var(--text-muted)] ${open ? "" : "line-clamp-2"}`}>{article.summary}{open && " This mock article is provided for demonstration only. It contains no copied source material and does not link to a live feed."}</p><div className="mt-5 flex flex-wrap items-center gap-3"><Button size="sm" onClick={() => setComposer(article)}>Post to channels <Icon name="arrow" className="size-4" /></Button><button aria-expanded={open} aria-controls={`summary-${article.id}`} onClick={() => setExpanded((current) => current.includes(article.id) ? current.filter((id) => id !== article.id) : [...current, article.id])} className="min-h-11 rounded-lg px-3 text-sm font-bold text-[var(--primary)] hover:bg-[var(--primary-soft)]">{open ? "Show less" : "Read summary"}</button></div></GlassCard>; })}
         {((tab === "internal" && !internal.length) || (tab === "external" && !external.length)) && <GlassCard className="p-10 text-center"><span className="mx-auto grid size-12 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><Icon name="search" className="size-6" /></span><h2 className="mt-4 text-xl font-bold">No matching content</h2><p className="muted mt-2 text-sm">Try clearing a filter or using a broader search.</p><Button variant="secondary" className="mt-5" onClick={clear}>Clear filters</Button></GlassCard>}
       </div>
-      {composer !== null && <PublishComposer open article={composer === "internal" ? null : composer} onClose={() => setComposer(null)} />}
+      {composer !== null && selectedUser && <PublishComposer open article={composer === "internal" ? null : composer} onClose={() => setComposer(null)} />}
     </div>
   );
 }

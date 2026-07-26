@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-[4.5rem] max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <div className="grid size-10 place-items-center rounded-xl bg-[var(--primary)] text-sm font-black text-white shadow-lg">LT</div>
-            <div>
+            <div className="hidden min-[480px]:block">
               <p className="text-sm font-bold leading-none">{appConfig.name}</p>
               <p className="mt-1 text-xs text-[var(--text-muted)]">{appConfig.assessment}</p>
             </div>
