@@ -12,7 +12,7 @@ export function UserSelector() {
   const [pendingId, setPendingId] = useState("");
   const chosen = users.find((user) => user.id === pendingId);
   return (
-    <Modal open={userSelectorOpen} title="Select your profile" description="Choose a mock user to continue. This selection is session-only and does not represent authentication." onClose={closeUserSelector} size="sm">
+    <Modal open={userSelectorOpen} title="Select your profile" description="Choose a mock user to continue. This selection is session-only and does not represent authentication." onClose={closeUserSelector} locked={!selectedUser} size="sm">
       <div className="space-y-2" role="radiogroup" aria-label="Available users">
         {users.map((user) => {
           const active = pendingId === user.id;
