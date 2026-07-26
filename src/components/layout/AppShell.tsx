@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { appConfig } from "@/config/app";
 import { Navigation } from "@/components/navigation/Navigation";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -14,7 +15,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="mt-1 text-xs text-[var(--text-muted)]">{appConfig.assessment}</p>
             </div>
           </div>
-          <span className="mr-14 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-[var(--text-muted)] lg:mr-0">Frontend prototype</span>
+          <div className="mr-14 flex items-center gap-2 lg:mr-0">
+            <span className="hidden rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-[var(--text-muted)] sm:inline">Frontend prototype</span>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       <div className="mx-auto flex max-w-[1600px]">

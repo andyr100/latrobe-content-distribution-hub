@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { appConfig } from "@/config/app";
 import { AppShell } from "@/components/layout/AppShell";
+import { PreferencesProvider } from "@/context/PreferencesContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,6 +31,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=JSON.parse(localStorage.getItem('lt-content-hub.preferences.v1')||'{}');var t=p.theme==='system'||!p.theme?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p.theme;document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}})()`,
+          }}
+        />
+      </head>
       <body>
         <a
           href="#main-content"
@@ -37,7 +45,7 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <AppShell>{children}</AppShell>
+        <PreferencesProvider><AppShell>{children}</AppShell></PreferencesProvider>
       </body>
     </html>
   );
