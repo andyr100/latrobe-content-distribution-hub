@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PreferencesProvider } from "@/context/PreferencesContext";
 import { SessionProvider } from "@/context/SessionContext";
 import { ContentProvider } from "@/context/ContentContext";
+import { PublishingProvider } from "@/context/PublishingContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -47,7 +48,7 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <PreferencesProvider><SessionProvider><ContentProvider><AppShell>{children}</AppShell></ContentProvider></SessionProvider></PreferencesProvider>
+        <PreferencesProvider><SessionProvider><ContentProvider><PublishingProvider><AppShell>{children}</AppShell></PublishingProvider></ContentProvider></SessionProvider></PreferencesProvider>
       </body>
     </html>
   );

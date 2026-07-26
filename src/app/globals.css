@@ -114,6 +114,7 @@ select.field option { background: var(--surface-strong); color: var(--text); }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes toast-in { from { opacity: 0; transform: translate3d(1.5rem, -0.5rem, 0); } }
 @keyframes modal-in { from { opacity: 0; transform: translateY(.75rem) scale(.98); } }
+@keyframes shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 .animate-spin { animation: spin .75s linear infinite; }
 .toast-in { animation: toast-in .28s ease-out both; }
 .modal-in { animation: modal-in .22s ease-out both; }
