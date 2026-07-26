@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { appConfig } from "@/config/app";
 import { Navigation } from "@/components/navigation/Navigation";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { UserSelector } from "@/components/user/UserSelector";
+import { UserProfileChip } from "@/components/user/UserProfileChip";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -18,6 +20,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="mr-14 flex items-center gap-2 lg:mr-0">
             <span className="hidden rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-[var(--text-muted)] sm:inline">Frontend prototype</span>
             <ThemeToggle />
+            <UserProfileChip />
           </div>
         </div>
       </header>
@@ -31,6 +34,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <span className="font-semibold text-[var(--text)]">{appConfig.name}</span>
         {" · "}{appConfig.student.name} · {appConfig.student.number} · Assessment 1 frontend only
       </footer>
+      <UserSelector />
     </div>
   );
 }
