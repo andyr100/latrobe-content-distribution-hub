@@ -43,6 +43,7 @@ export function Navigation() {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -51,6 +52,13 @@ export function Navigation() {
       if (event.key === "Escape") {
         setOpen(false);
         requestAnimationFrame(() => triggerRef.current?.focus());
+      }
+      if (event.key === "Tab" && drawerRef.current) {
+        const focusable = [...drawerRef.current.querySelectorAll<HTMLElement>("button:not([disabled]), a[href], [tabindex='0']")];
+        if (!focusable.length) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }
     };
     document.addEventListener("keydown", close);
@@ -87,7 +95,7 @@ export function Navigation() {
       </aside>
       <div className={`fixed inset-0 z-50 lg:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-hidden={!open}>
         <button aria-label="Close navigation backdrop" tabIndex={open ? 0 : -1} onClick={closeDrawer} className={`absolute inset-0 bg-[#070816]/55 backdrop-blur-sm transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`} />
-        <aside id="mobile-navigation" className={`glass absolute inset-y-0 left-0 w-[min(84vw,20rem)] rounded-r-[1.75rem] p-5 transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+        <aside ref={drawerRef} id="mobile-navigation" className={`glass absolute inset-y-0 left-0 w-[min(84vw,20rem)] rounded-r-[1.75rem] p-5 transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="mb-8 flex items-center justify-between">
             <div className="grid size-10 place-items-center rounded-xl bg-[var(--primary)] text-sm font-black text-white">LT</div>
             <button ref={closeRef} type="button" onClick={closeDrawer} aria-label="Close navigation" tabIndex={open ? 0 : -1} className="grid size-11 place-items-center rounded-xl hover:bg-[var(--surface-muted)]">

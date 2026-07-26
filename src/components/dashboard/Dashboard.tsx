@@ -4,12 +4,8 @@ import Link from "next/link";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { useSession } from "@/context/SessionContext";
-
-const summaries: { label: string; value: string; note: string; icon: IconName; tone: string }[] = [
-  { label: "Posts published", value: "14", note: "3 this week", icon: "posts", tone: "var(--primary)" },
-  { label: "Subject channels", value: "12", note: "11 active", icon: "channels", tone: "var(--cyan)" },
-  { label: "External RSS feeds", value: "5", note: "All subscribed", icon: "rss", tone: "var(--magenta)" },
-];
+import { useContent } from "@/context/ContentContext";
+import { usePreferences } from "@/context/PreferencesContext";
 const activity = [
   { actor: "Dr Sarah Williams", action: "published Assessment Preparation Guide", meta: "3 channels · 18 minutes ago", tone: "var(--primary)" },
   { actor: "Administrator", action: "added LTINF2HCI", meta: "Human–Computer Interaction · Yesterday", tone: "var(--cyan)" },
@@ -26,6 +22,13 @@ const actions: { label: string; note: string; href: string; icon: IconName }[] =
 
 export function Dashboard() {
   const { selectedUser } = useSession();
+  const { posts, channels } = useContent();
+  const { subscriptions } = usePreferences();
+  const summaries: { label: string; value: string; note: string; icon: IconName; tone: string }[] = [
+    { label: "Posts published", value: String(posts.length), note: "Internal content", icon: "posts", tone: "var(--primary)" },
+    { label: "Subject channels", value: String(channels.length), note: `${channels.filter((item) => item.active).length} active`, icon: "channels", tone: "var(--cyan)" },
+    { label: "External RSS feeds", value: String(subscriptions.length), note: `${subscriptions.length === 5 ? "All" : "Some"} subscribed`, icon: "rss", tone: "var(--magenta)" },
+  ];
   return (
     <div className="mx-auto max-w-6xl">
       <section className="relative overflow-hidden rounded-[1.75rem] border border-[var(--border)] bg-[linear-gradient(130deg,color-mix(in_srgb,var(--primary)_16%,var(--surface)),var(--surface)_54%,color-mix(in_srgb,var(--cyan)_10%,var(--surface)))] px-6 py-9 shadow-[var(--shadow)] sm:px-9 sm:py-11">
