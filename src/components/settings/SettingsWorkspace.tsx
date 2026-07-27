@@ -21,7 +21,7 @@ const themes: { id: ThemePreference; label: string; note: string }[] = [
 ];
 
 export function SettingsWorkspace() {
-  const { theme, setTheme, subscriptions, toggleSubscription, resetPreferences } = usePreferences();
+  const { theme, setTheme, subscriptions, toggleSubscription, channelListLayout, setChannelListLayout, resetPreferences } = usePreferences();
   const { resetContent } = useContent();
   const { notify } = usePublishing();
   const [resetOpen, setResetOpen] = useState(false);
@@ -52,7 +52,7 @@ export function SettingsWorkspace() {
           </div>
         </GlassCard>
         <div className="grid gap-6 md:grid-cols-2">
-          <GlassCard className="p-6"><p className="eyebrow">Destinations</p><h2 className="mt-2 text-xl font-bold">Subject channels</h2><p className="muted mt-2 text-sm leading-6">Add or remove the local subject feeds available when publishing.</p><Link href="/channels" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-strong)] px-4 text-sm font-bold hover:border-[var(--primary)]">Manage channels <Icon name="arrow" className="size-4" /></Link></GlassCard>
+          <GlassCard className="p-6"><p className="eyebrow">Destinations</p><h2 className="mt-2 text-xl font-bold">Subject channels</h2><p className="muted mt-2 text-sm leading-6">Add or remove the local subject feeds available when publishing.</p><label className="mt-5 flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-3"><span><span className="block text-sm font-bold">One channel per row</span><span className="muted block text-xs">Use full-width horizontal channel tiles</span></span><input type="checkbox" className="peer sr-only" checked={channelListLayout} onChange={(event) => setChannelListLayout(event.target.checked)} /><span className="relative block h-7 w-12 shrink-0 rounded-full bg-[var(--border-strong)] shadow-inner peer-checked:bg-[var(--primary)] peer-focus-visible:outline peer-focus-visible:outline-3 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-[var(--primary)]"><span aria-hidden="true" className={`absolute left-1 top-1 size-5 rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,.28)] transition-transform duration-200 ${channelListLayout ? "translate-x-5" : "translate-x-0"}`} /></span></label><Link href="/channels" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-strong)] px-4 text-sm font-bold hover:border-[var(--primary)]">Manage channels <Icon name="arrow" className="size-4" /></Link></GlassCard>
           <GlassCard className="p-6"><p className="eyebrow">About this version</p><h2 className="mt-2 text-xl font-bold">Version {appConfig.version}</h2><div className="mt-4 flex flex-wrap gap-2"><Badge>Assessment 1</Badge><Badge tone="cyan">Frontend only</Badge><Badge tone="neutral">Mock data</Badge></div><p className="muted mt-4 text-sm leading-6">No backend, live RSS processing or LMS connection is included.</p></GlassCard>
         </div>
         <GlassCard className="p-5 sm:p-7">
