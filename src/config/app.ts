@@ -3,7 +3,7 @@ export const appConfig = {
   assessment: "Cloud Based Applications — Assessment 1",
   version: "1.0.0",
   git: {
-    commitCount: 38,
+    commitCount: 39,
     branch: "main",
     commits: [
       { hash: "83717ab", date: "26 Jul 2026", branch: "main", message: "Initial commit from Create Next App" },
@@ -43,7 +43,8 @@ export const appConfig = {
       { hash: "76f33b4", date: "27 Jul 2026", branch: "main", message: "feat(channels): add persistent horizontal channel layout" },
       { hash: "afc8e71", date: "27 Jul 2026", branch: "main", message: "docs(project): add student details" },
       { hash: "df898c3", date: "27 Jul 2026", branch: "main", message: "feat(posts): add post deletion controls" },
-      { hash: "HEAD", date: "27 Jul 2026", branch: "main", message: "fix(theme): prevent startup theme fade" },
+      { hash: "26ef05e", date: "27 Jul 2026", branch: "main", message: "fix(theme): prevent startup theme fade" },
+      { hash: "HEAD", date: "27 Jul 2026", branch: "main", message: "docs(readme): document application and architecture" },
     ],
     commitTimes: {
       "83717ab": "20:38", "e1e51ad": "20:53", "e7875f4": "20:53", "0037df1": "20:55",
@@ -55,7 +56,7 @@ export const appConfig = {
       "39830ad": "21:09", "c2aa142": "21:10", "e89b258": "21:10", "01ccccc": "21:21",
       "880786f": "21:21", "86b969e": "22:25", "6dc38d5": "22:25", "cf8960e": "15:41",
       "90aa494": "15:44", "a4fa888": "15:50", "76f33b4": "15:57", "afc8e71": "19:29",
-      "df898c3": "20:02", "HEAD": "20:52",
+      "df898c3": "20:02", "26ef05e": "20:52", "HEAD": "20:54",
     },
   },
   student: {

@@ -1,15 +1,50 @@
 # La Trobe Content Distribution Hub
 
-A polished frontend prototype for **Cloud Based Applications — Assessment 1**.
-It gives lecturers and administrators one place to create university updates,
-classify them, select subject channels and simulate RSS distribution. Users can
-also review synthetic articles from subscribed external feeds and republish them
-through the same workflow.
+La Trobe Content Distribution Hub is a responsive frontend prototype for **Cloud Based Applications — Assessment 1**. It gives lecturers and administrators a single workspace to create, classify and distribute university updates to subject channels. It also lets them review a curated set of synthetic external RSS articles and republish a selected article through the same channel workflow.
 
-> This version is frontend only. It has no backend, database, real
-> authentication, live RSS processing or LMS connection.
+This is intentionally a client-side demonstration. It does not include a backend, database, real authentication, live RSS retrieval or RSS generation, cloud deployment, LMS delivery, or network calls to external feeds.
 
-## Quick start
+## Application functionality and features
+
+### Dashboard and navigation
+
+- Dashboard summary cards, recent activity and quick links to common tasks.
+- Responsive application shell with a desktop sidebar, mobile drawer, breadcrumbs and a skip link.
+- Six routes: dashboard, posts, channels, workflow, about and settings.
+- A mock user selector starts each new page load. The selected user is used as the author when publishing, but is not authentication and is not saved.
+
+### Posts and distribution workflow
+
+- Create a validated internal post with a title, body, classification and one or more channel destinations.
+- Browse internal posts and the External RSS catalogue in separate tabs.
+- Search and filter posts by classification, author, channel and source as appropriate.
+- Delete an individual internal post directly from its tile, with a confirmation dialog. External RSS items are source content and remain read-only.
+- Republish an external article to selected subject channels using the same confirmation and simulated publishing workflow.
+- A three-second locked publishing state, followed by a dismissible success toast, makes the future server-side delivery step visible without pretending that delivery has occurred.
+- Contextual links support `/posts?tab=external`, `/posts?create=1` and `/posts?channel=<id>`.
+
+### Channels and external content
+
+- Twelve seeded La Trobe subject channels, with add, delete and inspection workflows.
+- Choose between a grid layout and a persistent one-channel-per-row horizontal layout.
+- Five configurable external RSS sources, each contributing ten original synthetic articles when subscribed.
+- Ten defined classifications shared by internal posts and external articles.
+
+### Settings and persistence
+
+- Light, dark and system theme choices are saved in the browser. The saved theme is applied before the interactive app opens, preventing a light/dark startup flash or fade.
+- RSS subscriptions and the preferred channel layout are saved per browser.
+- The Settings page includes a collapsible, oldest-to-newest Git history tile, with one row per commit and its hash, date, time, branch and message.
+- **Reset workspace** removes local changes and restores the seed posts, channels, subscriptions, layout and system theme.
+
+### Accessibility and responsive behaviour
+
+- Semantic landmarks, a visible skip link, descriptive labels and visible focus states.
+- Keyboard-operable tabs, controls, drawers and dialogs; modal and drawer focus management; Escape handling; and polite toast announcements.
+- 44px interactive targets and reduced-motion handling.
+- Layouts designed and checked for 360px, 768px, 1024px and 1440px viewports.
+
+## Running the application
 
 Requirements: Node.js 20.9 or newer and npm.
 
@@ -20,7 +55,7 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-Production validation:
+For production validation:
 
 ```bash
 npm run lint
@@ -28,114 +63,79 @@ npm run build
 npm start
 ```
 
-## Routes
+## Architectural design and decisions
 
-| Route | Purpose |
+### Technology and rendering model
+
+The application uses Next.js App Router, React 19, TypeScript and Tailwind CSS. Pages and layout structure are rendered with the App Router; only the interactive workspaces and state providers are client components. This keeps the application structure simple while allowing immediate, responsive browser interactions.
+
+### State boundaries
+
+State is separated by responsibility rather than being placed in a single global store:
+
+| Boundary | Responsibility | Reason for the boundary |
+|---|---|---|
+| `PreferencesContext` | Theme preference, RSS subscriptions and channel layout | Keeps user-interface preferences independent from content. |
+| `SessionContext` | Current mock user and selector visibility | Makes the assessment's simulated identity flow explicit and non-persistent. |
+| `ContentContext` | Internal posts and subject channels | Gives all content creation, deletion and reset actions one local source of truth. |
+| `PublishingContext` | Confirmation, simulated publishing progress and toast notifications | Reuses the same feedback workflow for internal and external publication. |
+
+Reusable components provide the shell, navigation, page headers, cards, badges, buttons, icons, modal focus management, channel multi-select and publishing composer. This avoids duplicate interaction logic and keeps page components focused on their workspace.
+
+### Data design and persistence boundary
+
+`src/data/mockData.ts` contains the deterministic seed content: classifications, channels, feed definitions, synthetic external articles and seed internal posts. The 50 external titles and summaries are original fictional content. They are not downloaded, parsed or cached from real RSS feeds.
+
+There is no database. Content and preferences that the user changes are stored in `localStorage` on the current browser and device:
+
+| Key | Stored value |
 |---|---|
-| `/` | Dashboard summary, recent activity and quick actions |
-| `/posts` | Internal Posts and External RSS tabs, search and filters |
-| `/channels` | Add, delete and inspect subject destinations |
-| `/workflow` | Internal and external RSS-to-LMS user journeys |
-| `/about` | Purpose, scope, student details and video |
-| `/settings` | Appearance, RSS subscriptions and version details |
+| `lt-content-hub.preferences.v1` | Theme, subscribed feed IDs and channel-layout preference |
+| `lt-content-hub.channels.v1` | Added or deleted subject-channel state |
+| `lt-content-hub.internal-posts.v1` | Created or deleted internal-post state |
 
-Posts supports `?tab=external`, `?create=1` and `?channel=<id>` links for
-contextual navigation.
+Malformed stored values safely fall back to the seeded state. This browser-only storage was chosen to demonstrate the full interface and state lifecycle without implying a server, shared data, access controls or durable institutional record. Clearing site data or using **Reset workspace** returns the app to its default local state.
 
-## Features
+### Theme implementation
 
-- mandatory session-only selection from four mock users
-- complete light, dark and system themes with a two-second transition
-- responsive desktop sidebar and transform-based mobile drawer
-- eight deterministic internal posts and 12 LT-prefixed subject channels
-- exactly five external sources with ten original synthetic articles each
-- internal and external search and filtering
-- validated single-screen post composer
-- searchable keyboard-accessible channel multi-select
-- “All active channels”, selected count and removable wrapping pills
-- one confirmation/publishing state machine for internal and external content
-- locked, announced three-second publishing state
-- closable five-second success toast with title and destination count
-- persistent theme, subscriptions, mock posts and mock channels
-- add/delete channel workflows and channel-filtered post links
-- semantic breadcrumbs, landmarks, focus traps and reduced-motion support
+An early, non-React bootstrap script reads the saved preference and applies the resolved theme to the document before React becomes interactive. Once hydration has completed, the application enables the short transition used for deliberate theme changes. This decision prevents the page from briefly rendering in the wrong colour scheme or fading on startup.
 
-## Architecture
+### Future service boundary
 
-The application uses Next.js App Router, React 19, TypeScript and Tailwind CSS.
-Static page structure remains server-rendered where practical. Interactive
-workspaces and providers are client components.
+The publishing delay and workflow visualisation deliberately mark the boundary where a later system could add authenticated users, an API, persistent database, RSS ingestion and generation, a queue or notification service, and LMS integration. The current component and context boundaries make those services replaceable without changing the core user journey.
 
-Shared state is split by responsibility:
+## Project structure
 
-- `PreferencesContext` — theme and RSS subscriptions
-- `SessionContext` — selected mock user and selector state
-- `ContentContext` — internal posts and subject channels
-- `PublishingContext` — confirmation, three-second progress and toasts
+```text
+src/
+  app/                  App Router pages, layout and global styles
+  components/           Shared UI, layout, publishing, posts, channels and settings components
+  config/app.ts         Application, student and displayed Git-history metadata
+  context/              Preference, session, content and publishing state boundaries
+  data/mockData.ts      Deterministic seed data and synthetic RSS catalogue
+  types/                Shared TypeScript domain types
+```
 
-Reusable components cover the application shell, navigation, page headers,
-cards, badges, buttons, modal focus management, the channel selector and the
-publishing composer. Deterministic data is centralised in
-`src/data/mockData.ts`; student and version details are centralised in
-`src/config/app.ts`.
+## Development history
 
-## Browser storage
-
-Malformed values safely fall back to seed state.
-
-| Key | Contents |
-|---|---|
-| `lt-content-hub.preferences.v1` | theme and subscribed feed IDs |
-| `lt-content-hub.channels.v1` | mock subject channel changes |
-| `lt-content-hub.internal-posts.v1` | newly published internal posts |
-
-The selected user is deliberately **not persisted**. A full application load
-always shows the user selector because this is a simulation, not authentication.
-
-## Accessibility and responsive design
-
-The interface targets good WCAG 2.2 AA practice with semantic
-header/nav/main/footer landmarks, a visible skip link, one H1 per page, semantic
-breadcrumbs, visible focus rings, labelled controls, native buttons and links,
-ARIA state for drawers/tabs/expansion, modal and drawer focus containment,
-Escape and focus return, polite toast announcements, 44px touch targets and
-`prefers-reduced-motion`. Layouts are designed for 360, 768, 1024 and 1440px
-viewports.
-
-## Mock-data policy
-
-All names, posts, summaries and external articles are local demonstration data.
-The 50 external article titles and summaries are original synthetic text; the
-application performs no network feed retrieval and reproduces no source
-articles. Counts and timestamps are deterministic for reliable marking and
-screenshots.
-
-## Git development process
-
-The project was developed chronologically on feature branches. Each milestone
-was linted, production-built, committed, then merged to `main` before the next
-milestone began. Inspect the genuine history with:
+The repository history records the feature work chronologically. The Settings Git tile mirrors the project commit metadata for in-app review; the repository remains the source of truth.
 
 ```bash
 git log --graph --oneline --decorate --all
 ```
 
-## Student configuration
+## Student details
 
-Replace both placeholders in `src/config/app.ts` before submission:
+The configured student details are:
 
-```ts
-student: {
-  name: "Andy Rea",
-  number: "22809185",
-}
-```
+- Name: Andy Rea
+- Student number: 22809185
+
+They are centralised in `src/config/app.ts`.
 
 ## Demonstration video
 
-Record a 3–8 minute MP4 (target 5–6 minutes) showing the student ID, face,
-voice, application, responsive navigation, themes, publishing flow and code.
-Place it at:
+Record a 3–8 minute MP4 (target 5–6 minutes) demonstrating the student ID, face, voice, application, responsive navigation, themes, publishing flow and code. Place it at:
 
 ```text
 public/video/assessment-demo.mp4
@@ -143,21 +143,13 @@ public/video/assessment-demo.mp4
 
 See `docs/VIDEO_SPEAKING_NOTES.md` for the guided run-through.
 
-## Known limitations and Assessment 2
-
-This assessment intentionally does not include server persistence, permissions,
-live RSS parsing, RSS XML generation, real channel delivery, cloud
-infrastructure or LMS integration. A later assessment can introduce those
-services behind the existing content and publishing boundaries. The mock
-three-second delay represents that future server operation.
-
-## Clean submission checklist
+## Submission checklist
 
 1. Confirm the student name and number are correct.
 2. Add and test the final 3–8 minute MP4.
 3. Run `npm ci`, `npm run lint` and `npm run build`.
 4. Review keyboard operation at the four target widths.
-5. Confirm the repository link and Git graph.
+5. Review the repository Git graph.
 6. Exclude `node_modules`, `.next` and local environment files from the zip.
 7. Submit through Moodle/Turnitin and confirm a similarity score is generated.
 
