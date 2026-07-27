@@ -54,6 +54,16 @@ export function SettingsWorkspace() {
           <GlassCard className="p-6"><p className="eyebrow">Destinations</p><h2 className="mt-2 text-xl font-bold">Subject channels</h2><p className="muted mt-2 text-sm leading-6">Add or remove the local subject feeds available when publishing.</p><Link href="/channels" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--surface-strong)] px-4 text-sm font-bold hover:border-[var(--primary)]">Manage channels <Icon name="arrow" className="size-4" /></Link></GlassCard>
           <GlassCard className="p-6"><p className="eyebrow">About this version</p><h2 className="mt-2 text-xl font-bold">Version {appConfig.version}</h2><div className="mt-4 flex flex-wrap gap-2"><Badge>Assessment 1</Badge><Badge tone="cyan">Frontend only</Badge><Badge tone="neutral">Mock data</Badge></div><p className="muted mt-4 text-sm leading-6">No backend, live RSS processing or LMS connection is included.</p></GlassCard>
         </div>
+        <GlassCard className="p-5 sm:p-7">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+            <div className="flex items-start gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><Icon name="workflow" className="size-5" /></span><div><p className="eyebrow">Development history</p><h2 className="mt-1 text-xl font-bold">Git commits</h2><p className="muted mt-1 text-sm">A genuine chronological feature-branch history for this assessment.</p></div></div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left sm:text-right"><p className="text-2xl font-bold text-[var(--primary)]">{appConfig.git.commitCount}</p><p className="muted text-xs font-semibold">commits on {appConfig.git.branch}</p></div>
+          </div>
+          <ol className="mt-6 grid gap-2 md:grid-cols-2">
+            {appConfig.git.recentCommits.map((commit) => <li key={commit.hash} className="flex min-w-0 items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3"><code className="shrink-0 rounded-md bg-[var(--surface-strong)] px-2 py-1 text-[.68rem] font-bold text-[var(--primary)]">{commit.hash}</code><span className="min-w-0 truncate text-sm font-semibold" title={commit.message}>{commit.message}</span></li>)}
+          </ol>
+          <p className="muted mt-4 text-xs">Includes foundation, design system, navigation, themes, publishing, channels, documentation and accessibility milestones.</p>
+        </GlassCard>
         <GlassCard className="border-[color-mix(in_srgb,var(--danger)_28%,var(--border))] p-5 sm:p-7">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
             <div className="flex items-start gap-3">
