@@ -76,11 +76,17 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     const apply = () => root.dataset.theme = resolveTheme(state.theme);
     apply();
+    const frame = requestAnimationFrame(() => {
+      root.dataset.themeReady = "true";
+    });
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme: state.theme, subscriptions: state.subscriptions, channelListLayout: state.channelListLayout }));
-    if (state.theme !== "system") return;
+    if (state.theme !== "system") return () => cancelAnimationFrame(frame);
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
+    return () => {
+      cancelAnimationFrame(frame);
+      media.removeEventListener("change", apply);
+    };
   }, [state]);
 
   return (
