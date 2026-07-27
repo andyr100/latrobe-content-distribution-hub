@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-export type IconName = "dashboard" | "posts" | "channels" | "workflow" | "about" | "settings" | "menu" | "close" | "chevron" | "sun" | "moon" | "user" | "plus" | "search" | "arrow" | "rss" | "check" | "trash" | "external" | "clock";
+export type IconName = "dashboard" | "posts" | "channels" | "workflow" | "about" | "settings" | "menu" | "close" | "chevron" | "more" | "sun" | "moon" | "user" | "plus" | "search" | "arrow" | "rss" | "check" | "trash" | "external" | "clock";
 
 const paths: Record<IconName, React.ReactNode> = {
   dashboard: <><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></>,
@@ -12,6 +12,7 @@ const paths: Record<IconName, React.ReactNode> = {
   menu: <path d="M4 7h16M4 12h16M4 17h16"/>,
   close: <path d="m6 6 12 12M18 6 6 18"/>,
   chevron: <path d="m9 18 6-6-6-6"/>,
+  more: <><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></>,
   sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></>,
   moon: <path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2z"/>,
   user: <><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>,
