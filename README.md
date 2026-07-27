@@ -98,7 +98,7 @@ Malformed stored values safely fall back to the seeded state. This browser-only 
 
 ### Theme implementation
 
-An early, non-React bootstrap script reads the saved preference and applies the resolved theme to the document before React becomes interactive. Once hydration has completed, the application enables the short transition used for deliberate theme changes. This decision prevents the page from briefly rendering in the wrong colour scheme or fading on startup.
+An early, non-React bootstrap script reads the saved preference and applies the resolved theme to the document before React becomes interactive. Once hydration has completed, the application enables the two-second transition used for deliberate theme changes. This decision prevents the page from briefly rendering in the wrong colour scheme or fading on startup.
 
 ### Future service boundary
 
