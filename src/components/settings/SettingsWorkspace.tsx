@@ -25,6 +25,7 @@ export function SettingsWorkspace() {
   const { resetContent } = useContent();
   const { notify } = usePublishing();
   const [resetOpen, setResetOpen] = useState(false);
+  const [gitHistoryOpen, setGitHistoryOpen] = useState(false);
   const updateSubscription = (id: string, name: string) => {
     const subscribing = !subscriptions.includes(id);
     toggleSubscription(id);
@@ -55,14 +56,16 @@ export function SettingsWorkspace() {
           <GlassCard className="p-6"><p className="eyebrow">About this version</p><h2 className="mt-2 text-xl font-bold">Version {appConfig.version}</h2><div className="mt-4 flex flex-wrap gap-2"><Badge>Assessment 1</Badge><Badge tone="cyan">Frontend only</Badge><Badge tone="neutral">Mock data</Badge></div><p className="muted mt-4 text-sm leading-6">No backend, live RSS processing or LMS connection is included.</p></GlassCard>
         </div>
         <GlassCard className="p-5 sm:p-7">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-            <div className="flex items-start gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><Icon name="workflow" className="size-5" /></span><div><p className="eyebrow">Development history</p><h2 className="mt-1 text-xl font-bold">Git commits</h2><p className="muted mt-1 text-sm">A genuine chronological feature-branch history for this assessment.</p></div></div>
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left sm:text-right"><p className="text-2xl font-bold text-[var(--primary)]">{appConfig.git.commitCount}</p><p className="muted text-xs font-semibold">commits on {appConfig.git.branch}</p></div>
-          </div>
-          <ol className="mt-6 grid gap-2 md:grid-cols-2">
-            {appConfig.git.recentCommits.map((commit) => <li key={commit.hash} className="flex min-w-0 items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3"><code className="shrink-0 rounded-md bg-[var(--surface-strong)] px-2 py-1 text-[.68rem] font-bold text-[var(--primary)]">{commit.hash}</code><span className="min-w-0 truncate text-sm font-semibold" title={commit.message}>{commit.message}</span></li>)}
-          </ol>
-          <p className="muted mt-4 text-xs">Includes foundation, design system, navigation, themes, publishing, channels, documentation and accessibility milestones.</p>
+          <button type="button" onClick={() => setGitHistoryOpen((open) => !open)} aria-expanded={gitHistoryOpen} aria-controls="git-history-list" className="flex w-full items-start justify-between gap-4 rounded-xl text-left focus-visible:outline-offset-4">
+            <span className="flex min-w-0 items-start gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><Icon name="workflow" className="size-5" /></span><span><span className="eyebrow">Development history</span><span className="mt-1 block text-xl font-bold">Git commits</span><span className="muted mt-1 block text-sm">A genuine chronological feature-branch history for this assessment.</span></span></span>
+            <span className="flex shrink-0 items-center gap-3"><span className="hidden rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-right sm:block"><span className="block text-2xl font-bold text-[var(--primary)]">{appConfig.git.commitCount}</span><span className="muted block text-xs font-semibold">commits on {appConfig.git.branch}</span></span><span className="grid size-11 place-items-center rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--primary)]"><Icon name="chevron" className={`size-5 rotate-90 transition-transform duration-200 ${gitHistoryOpen ? "rotate-[270deg]" : ""}`} /></span></span>
+          </button>
+          {gitHistoryOpen && <div id="git-history-list" className="mt-6 border-t border-[var(--border)] pt-5">
+            <p className="muted mb-3 text-xs font-semibold">Oldest to newest · one record per commit</p>
+            <ol className="grid gap-2">
+              {appConfig.git.commits.map((commit, index) => <li key={commit.hash} className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3.5 sm:flex-row sm:items-center"><span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--surface-strong)] text-xs font-black text-[var(--primary)]">{String(index + 1).padStart(2, "0")}</span><div className="min-w-0 flex-1"><p className="break-words text-sm font-bold">{commit.message}</p><div className="muted mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs"><code className="rounded bg-[var(--surface-strong)] px-1.5 py-0.5 font-bold text-[var(--primary)]">{commit.hash}</code><span>{commit.date}</span><span aria-hidden="true">·</span><span>{commit.branch}</span></div></div></li>)}
+            </ol>
+          </div>}
         </GlassCard>
         <GlassCard className="border-[color-mix(in_srgb,var(--danger)_28%,var(--border))] p-5 sm:p-7">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
