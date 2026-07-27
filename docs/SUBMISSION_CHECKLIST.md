@@ -1,6 +1,6 @@
 # Final submission checklist
 
-- [ ] Replace the name and student-number placeholders in `src/config/app.ts`.
+- [x] Student name and number are configured in `src/config/app.ts`.
 - [ ] Add `public/video/assessment-demo.mp4`.
 - [ ] Confirm the video is 3–8 minutes and includes face, voice and student ID.
 - [ ] Test every route at 360, 768, 1024 and 1440px.

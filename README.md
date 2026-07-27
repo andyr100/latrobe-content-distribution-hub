@@ -126,8 +126,8 @@ Replace both placeholders in `src/config/app.ts` before submission:
 
 ```ts
 student: {
-  name: "REPLACE WITH REAL NAME",
-  number: "REPLACE WITH REAL STUDENT NUMBER",
+  name: "Andy Rea",
+  number: "22809185",
 }
 ```
 
@@ -153,7 +153,7 @@ three-second delay represents that future server operation.
 
 ## Clean submission checklist
 
-1. Replace student name and number.
+1. Confirm the student name and number are correct.
 2. Add and test the final 3–8 minute MP4.
 3. Run `npm ci`, `npm run lint` and `npm run build`.
 4. Review keyboard operation at the four target widths.
