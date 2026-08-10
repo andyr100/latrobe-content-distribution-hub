@@ -4,9 +4,16 @@ export const appConfig = {
   version: "2.0.0",
   student: { name: "Andy Rea", number: "22809185" },
   git: {
-    commitCount: 41,
+    commitCount: 48,
     branch: "feature/a2-split-full-stack",
     commits: [
+      { hash: "HEAD", date: "10 Aug 2026", message: "chore(settings): refresh Git history" },
+      { hash: "eb505d3", date: "10 Aug 2026", message: "docs(video): add deployment and RSS demonstration notes" },
+      { hash: "e0f43b0", date: "10 Aug 2026", message: "feat(docker): add local and EC2 service configurations" },
+      { hash: "d686c89", date: "10 Aug 2026", message: "feat(rss): add RSS server and standalone client" },
+      { hash: "5d9bdde", date: "10 Aug 2026", message: "feat(api): add SQLite REST API and database inspector" },
+      { hash: "3de4992", date: "10 Aug 2026", message: "feat(frontend): add channel publishing workspace" },
+      { hash: "9447e1e", date: "10 Aug 2026", message: "chore(project): prepare assessment 2 workspace" },
       { hash: "43d0386", date: "27 Jul 2026, 21:25", message: "chore(git): ignore MP4 video files" },
       { hash: "e7b391b", date: "27 Jul 2026, 20:55", message: "fix(theme): restore theme transition duration" },
       { hash: "1cf3676", date: "27 Jul 2026, 20:54", message: "docs(readme): document application and architecture" },
