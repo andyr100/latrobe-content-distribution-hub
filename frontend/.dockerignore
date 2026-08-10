@@ -1,0 +1,6 @@
+node_modules
+.next
+*.log
+.env
+.env.local
+public/video/*.mp4
