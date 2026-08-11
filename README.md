@@ -206,8 +206,8 @@ The `.env` file is optional because Compose supplies safe local defaults. It sup
 # Initial state of the RSS Client auto-refresh switch
 NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED=true
 
-# YouTube/share/embed URL displayed on the About page; leave blank until uploaded
-NEXT_PUBLIC_ASSESSMENT_VIDEO_URL=
+# Locally served recording displayed on the About page
+NEXT_PUBLIC_ASSESSMENT_VIDEO_URL=/video/assessment-demo.mp4
 ```
 
 These values are compiled into their browser applications. Run `docker compose up --build -d` after changing them. The RSS Client switch still pauses or resumes refresh immediately; reloading restores its environment-configured default.
@@ -296,7 +296,7 @@ The final demonstration should be no longer than five minutes. A direct recordin
 6. update/delete behaviour and persistent storage after an API restart; and
 7. GitHub branches, commits, tests and successful Actions checks.
 
-After uploading the recording, set `NEXT_PUBLIC_ASSESSMENT_VIDEO_URL` and rebuild the frontend to display it on the About page. Standard YouTube watch links and `youtu.be` share links are converted to embed URLs automatically.
+The local recording is expected at `frontend/public/video/assessment-demo.mp4` and is configured as `/video/assessment-demo.mp4` through `NEXT_PUBLIC_ASSESSMENT_VIDEO_URL`. Docker mounts that directory read-only into the frontend container, so the large MP4 remains outside Git and outside the Docker image. Replace the local file and rebuild the frontend after changing the environment path. External YouTube/embed URLs remain supported if needed later.
 
 ## Submission workflow
 

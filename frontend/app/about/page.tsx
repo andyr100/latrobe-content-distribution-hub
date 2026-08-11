@@ -4,26 +4,36 @@ import { Badge } from "@/components/ui/Badge";
 import { Icon } from "@/components/ui/Icon";
 import { appConfig } from "@/config/app";
 
-function assessmentVideoUrl() {
+function assessmentVideo() {
   const configuredUrl = process.env.NEXT_PUBLIC_ASSESSMENT_VIDEO_URL?.trim();
   if (!configuredUrl) return null;
+
+  if (configuredUrl.startsWith("/")) {
+    return { url: configuredUrl, locallyHosted: true };
+  }
 
   try {
     const url = new URL(configuredUrl);
     if (url.hostname === "youtu.be") {
-      return `https://www.youtube.com/embed/${url.pathname.slice(1)}`;
+      return {
+        url: `https://www.youtube.com/embed/${url.pathname.slice(1)}`,
+        locallyHosted: false,
+      };
     }
     if (url.hostname.endsWith("youtube.com") && url.searchParams.get("v")) {
-      return `https://www.youtube.com/embed/${url.searchParams.get("v")}`;
+      return {
+        url: `https://www.youtube.com/embed/${url.searchParams.get("v")}`,
+        locallyHosted: false,
+      };
     }
-    return configuredUrl;
+    return { url: configuredUrl, locallyHosted: false };
   } catch {
     return null;
   }
 }
 
 export default function AboutPage() {
-  const videoUrl = assessmentVideoUrl();
+  const video = assessmentVideo();
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -106,15 +116,20 @@ export default function AboutPage() {
               storage, operational endpoints, and RSS delivery to the separate mock LMS client.
             </p>
           </div>
-          <Badge tone={videoUrl ? "cyan" : "neutral"}>
-            {videoUrl ? "Video available" : "Video link pending"}
+          <Badge tone={video ? "cyan" : "neutral"}>
+            {video ? "Video available" : "Video link pending"}
           </Badge>
         </div>
         <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)]">
-          {videoUrl ? (
+          {video?.locallyHosted ? (
+            <video className="aspect-video w-full bg-black" controls preload="metadata">
+              <source src={video.url} type="video/mp4" />
+              Your browser does not support HTML video playback.
+            </video>
+          ) : video ? (
             <iframe
               className="aspect-video w-full"
-              src={videoUrl}
+              src={video.url}
               title="Assessment 2 video walkthrough"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
@@ -127,8 +142,8 @@ export default function AboutPage() {
                 </span>
                 <h3 className="mt-5 text-xl font-bold">Video placeholder ready</h3>
                 <p className="muted mt-3 leading-7">
-                  Set <code>NEXT_PUBLIC_ASSESSMENT_VIDEO_URL</code> to a YouTube video, YouTube
-                  embed URL, or another embeddable HTTPS video URL, then rebuild the frontend.
+                  Set <code>NEXT_PUBLIC_ASSESSMENT_VIDEO_URL</code> to a local public video path or
+                  an embeddable video URL, then rebuild the frontend.
                 </p>
               </div>
             </div>
