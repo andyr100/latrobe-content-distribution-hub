@@ -1,146 +1,175 @@
-# RSS Feed Update — Video Talking Points
+# Assessment 2 video talking points
 
-## Simple explanation
+Target length: about six minutes. Keep the browser tabs and PowerShell windows open before recording.
 
-For this update, I made the RSS part of the application simpler and closer to the lecturer's guidance.
+## 1. Introduction — about 30 seconds
 
-The API now has one main RSS feed at `/rss`. This gives the five newest posts from all channels.
+“This is my Assessment 2 Content Distribution Hub. It extends my Assessment 1 frontend with a real backend, Sequelize ORM, a persistent SQLite database, RSS Server, separate RSS Client and Docker deployment.”
 
-It also has a channel-specific feed, such as `/rss/FRONTIERLLMS`. This only gives posts for the selected channel.
+“My Docker Compose stack has four services. Each service runs in its own container. The services are the frontend, API, RSS Client and a lightweight SQLite volume holder. They communicate through one private Docker network.”
 
-Both feeds return RSS 2.0 XML. They use the same shared code, so the feed title, post title, description, author, date, image, and link are created consistently.
+Do not say that all four services are in one container.
 
-I kept the old API RSS URL working as a compatibility alias. This means `/api/rss/topics/FRONTIERLLMS` still works, but the new recommended RSS URLs are `/rss` and `/rss/:channelCode`.
+## 2. Prove Docker is running — about 45 seconds
 
-Each RSS post now links back to the main frontend. For example, an RSS item can open `/posts/21` instead of opening another XML endpoint. This gives users a normal readable page with the post title, author, date, channels, content, image, and optional external link.
-
-The RSS Client is still a separate service on port 5000. It loads the list of channels, automatically loads the selected channel feed, and refreshes the feed every 15 seconds. The spinner and countdown show when the next refresh will happen.
-
-The API keeps track of successful RSS requests using the `/count` endpoint. This lets us demonstrate that the RSS Client is really making requests to the API.
-
-I also configured the frontend base URL in Docker. This ensures RSS links point to `http://localhost:3000/posts/:id` when the application is running locally.
-
-Finally, I ran lint and production builds for the frontend, API, and RSS Client. I also rebuilt the Docker stack and tested the feeds, compatibility route, post reader, and request counter.
-
-## Navigation instructions for the video
-
-Start Docker first if it is not already running:
-
-```powershell
-docker compose up --build -d
-```
-
-Open these browser tabs before recording:
-
-1. Main frontend: http://localhost:3000
-2. API combined RSS feed: http://localhost:4000/rss
-3. API Frontier LLMs feed: http://localhost:4000/rss/FRONTIERLLMS
-4. Compatibility RSS feed: http://localhost:4000/api/rss/topics/FRONTIERLLMS
-5. RSS Client: http://localhost:5000
-6. RSS request count: http://localhost:4000/count
-
-Suggested demonstration order:
-
-1. Open the main frontend at `localhost:3000`.
-2. Go to **Posts** and point out that posts are assigned to channels.
-3. Open `localhost:4000/rss` and explain that this is the main feed with the latest five posts across all channels.
-4. Open `localhost:4000/rss/FRONTIERLLMS` and explain that this is a feed for one channel only.
-5. Open `localhost:4000/api/rss/topics/FRONTIERLLMS` and mention that it is retained as a compatibility route.
-6. In either RSS XML page, find an item `<link>` and open it. It should go to a page like `localhost:3000/posts/21`.
-7. On the post-reader page, point out the author, publication date, channel labels, post body, and optional link/image.
-8. Open `localhost:5000`. Select a channel if one is not already selected.
-9. Show that its feed loads automatically. Point out the small spinner while refreshing and the 15-second countdown clock.
-10. Wait for one automatic refresh, or change to a different channel, then open `localhost:4000/count` to show that successful RSS requests increased.
-
-Optional Docker check in PowerShell:
+Run:
 
 ```powershell
 docker compose ps
 ```
 
-You should see four running services: `frontend`, `api`, `rss-client`, and `sqlite`.
+Point out:
 
-## EC2 deployment talking points
+- `frontend` is on port 3000 and is healthy.
+- `api` is on port 4000 and is healthy.
+- `rss-client` is on port 5000 and is healthy.
+- `sqlite` holds the named data volume and is healthy.
 
-The local Docker setup uses ports 3000 for the frontend, 4000 for the API, and 5000 for the RSS Client. These are convenient ports for development on my computer.
-
-The course diagram shows a separate EC2 deployment layout. It does not mean that every container needs a different internal port. In that layout, both the frontend and API containers can run internally on port 3000, while Docker exposes them through different public ports.
-
-On EC2, the frontend is mapped from public port 80 to container port 3000. This means users can visit the website using the normal web address without typing a port number.
-
-The API is mapped from public port 4080 to container port 3000. This keeps the API separate from the frontend while still allowing browser requests to reach it.
-
-I kept the normal local Compose file unchanged for the assessment. I added a separate EC2 Compose override, so the same project can run locally or use the EC2 port layout without changing application code each time.
-
-For EC2, the frontend uses the public API address, for example `http://YOUR_EC2_HOST:4080`. Inside Docker, the RSS Client talks privately to the API using `http://api:3000`.
-
-The EC2 security group needs inbound TCP rules for port 80 for the frontend and port 4080 for the API. The standalone RSS Client is not publicly exposed by default.
-
-## EC2 navigation and commands
-
-Before deploying, copy the example environment file and replace the placeholder host name with the EC2 public IP address or public DNS name:
+Then enter the API container:
 
 ```powershell
-Copy-Item ec2.env.example ec2.env
+docker compose exec api sh
 ```
 
-Then start the EC2 configuration:
+Inside the container, run:
+
+```sh
+pwd
+ls -la
+node -v
+exit
+```
+
+Say: “This proves the backend is running inside its Docker container, not directly on my computer.”
+
+## 3. Explain the database — about 50 seconds
+
+Open the README ER diagram or the Database tab at http://localhost:3000/database.
+
+Say:
+
+“Sequelize manages a versioned schema. A User authors many Posts. Posts and Feeds have a many-to-many relationship through PostFeeds. The interface calls feeds Channels because that wording is clearer for publishers. RequestCounter stores successful RSS requests.”
+
+“Posts contain the author, publication date, body, optional image and optional link required by the rubric. Foreign keys and cascade rules protect the relationships. Indexes support publication dates, authors and feed lookups.”
+
+Use the table selector to show `Users`, `Posts`, `Feeds`, `PostFeeds`, `RequestCounters` and `SchemaMigrations`.
+
+Say: “This inspector is read-only. It proves that the screen is displaying real SQLite records.”
+
+## 4. Show operational endpoints — about 35 seconds
+
+Open:
+
+- http://localhost:4000/health
+- http://localhost:4000/count
+- http://localhost:4000/stats
+
+Say:
+
+“Health confirms that the API is running and SQLite is connected. Count shows successful RSS requests. Stats provides database-driven totals, posts per feed and the latest publication. These endpoints use the same predictable success response structure as the REST API.”
+
+## 5. Demonstrate create and RSS delivery — about 90 seconds
+
+Open the RSS Client at http://localhost:5000 and select the channel you will publish to.
+
+Say:
+
+“The RSS Client is a separate application. It represents a simple LMS. It automatically loads the selected feed and refreshes every 15 seconds. The spinner and countdown make the request timing visible.”
+
+Open the frontend at http://localhost:3000 and create a post:
+
+- Enter a clear title and body.
+- Select the same channel as the RSS Client.
+- Confirm publication.
+
+Open the Database tab and select `Posts`, then `PostFeeds`. Point out the new post row and join row.
+
+Return to the RSS Client. Wait for the countdown. The new post should appear automatically.
+
+Say:
+
+“The frontend sent JSON to the API. The API validated it, saved the post and relationship in one SQLite transaction, generated RSS XML, and the separate RSS Client received the new feed on its next refresh.”
+
+Refresh `/count` and show that the number increased.
+
+## 6. Demonstrate update and delete — about 50 seconds
+
+In Posts, edit the new post. Change its title, publication date or assigned channel and save it. Show the database and correct RSS channel changing.
+
+Then delete the post and show that it disappears from Posts, PostFeeds and the RSS output.
+
+Say:
+
+“This demonstrates create, read, update and delete. Feed relationships update transactionally, and join rows cascade when the post is deleted.”
+
+## 7. Show RSS endpoints — about 35 seconds
+
+Open:
+
+- http://localhost:4000/rss
+- http://localhost:4000/rss/FRONTIERLLMS
+
+Say:
+
+“The main `/rss` endpoint sends the five newest unique posts. The channel endpoint sends only posts assigned to that channel. Both return RSS 2.0 XML from the same generator.”
+
+Point to an item link such as `http://localhost:3000/posts/12`.
+
+Say: “Each RSS item links to a readable frontend post page. The optional external link remains separate post metadata.”
+
+## 8. Prove persistence — about 35 seconds
+
+Run:
 
 ```powershell
-docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.override.yml up --build -d
+docker compose restart api
 ```
 
-## Correct Docker terminology
+After the API becomes healthy, refresh Posts, `/count` and the Database tab.
 
-It is better to say that this project has **four Docker Compose services in one Docker Compose stack**, rather than saying they are all in one container.
+Say:
 
-The four services are:
+“Restarting the API container does not remove the post data or request counter because SQLite is stored in a named Docker volume. I only use `docker compose down -v` when I deliberately want a completely fresh database.”
 
-1. `frontend` — the main publishing and administration user interface.
-2. `api` — the REST API, RSS server, and SQLite database access layer.
-3. `rss-client` — the separate mock LMS RSS viewer.
-4. `sqlite` — the lightweight service that holds the shared named SQLite data volume.
+## 9. Code quality and GitHub — about 40 seconds
 
-When Docker Compose starts the project, each service runs in its own container. The containers are connected through the same private Docker network and are managed together as one Compose application or stack.
+Show the GitHub repository, Actions page, commit list and final tag.
 
-A simple way to say this in the video is: “My Docker Compose stack has four services, and Docker runs each service in its own container. The frontend, API, RSS Client, and SQLite volume holder work together on the same Docker network.”
+Say:
 
-## RSS Client live-update demonstration
+“The code is divided into three Next.js applications and reusable API models, services, validation and migrations. Automated tests use a temporary SQLite database and cover CRUD, invalid data, rollback, RSS filtering, XML escaping, the five-item limit, counting and cascade deletion.”
 
-The RSS Client is a separate application, not a page inside the main administration frontend. It represents a simple LMS-style system that receives and displays the posts published through the Content Distribution API.
+“GitHub Actions installs all applications, checks formatting, runs lint and tests, and creates production builds. The completed submission is on main and tagged `assessment-2-final`. Node modules, builds, environment secrets and local databases are not tracked.”
 
-It loads posts from the selected channel's RSS feed and automatically refreshes every 15 seconds. The spinner and countdown clock make the refresh behaviour visible.
+The Settings page reads recent commit details from the build instead of containing a manually typed history. GitHub remains the complete source of truth.
 
-For the demonstration, keep the main frontend open in one browser tab at `http://localhost:3000` and the RSS Client open in another tab at `http://localhost:5000`.
+## 10. EC2 port explanation — optional, 20 seconds
 
-First, select the same channel in the RSS Client that you will use for the new post. Then create and publish a new post in the main frontend and assign it to that channel.
+Keep this brief because actual cloud deployment belongs to a later assessment.
 
-After publishing, return to the RSS Client. Within 15 seconds, it automatically requests the RSS feed again and the newly created post appears in the list. This demonstrates that the frontend writes the post through the API, the API saves it in SQLite and generates RSS, and the separate RSS Client receives the updated feed.
+“Local Docker correctly shows frontend `3000:3000`, API `4000:4000` and RSS Client `5000:5000`. The format is host port followed by container port.”
 
-A simple way to say this in the video is: “The RSS Client is a separate application. It reads the selected channel’s RSS feed and refreshes automatically every 15 seconds. I will now create a post in the admin frontend, and after the next refresh it will appear here in the RSS Client.”
+“The separate EC2 override maps public port 80 to frontend container port 3000 and public port 4080 to API container port 3000. The local configuration stays unchanged.”
 
-For the video, you can show `docker-compose.ec2.override.yml` and explain these mappings:
-
-1. Frontend: EC2 port `80` to container port `3000`.
-2. API: EC2 port `4080` to container port `3000`.
-3. RSS Client: remains private inside Docker unless it is deliberately exposed later.
-
-You can also show that the API health check was made port-aware, so it works when the API runs locally on port 4000 or inside the EC2 configuration on port 3000.
-
-## Explaining the Docker ports shown locally
-
-If I run `docker compose ps` on my computer, it correctly shows `3000:3000` for the frontend, `4000:4000` for the API, and `5000:5000` for the RSS Client. This is the normal local development configuration.
-
-The numbers before and after the colon mean `host port:container port`. For example, `4000:4000` means my browser uses port 4000 on my computer and Docker passes that request to port 4000 inside the API container.
-
-The EC2 ports are different because I start Docker with an additional EC2 override file. That override replaces the local port mappings without changing the normal local Compose file.
-
-When running on EC2, `docker compose ps` would show the frontend as `80:3000` and the API as `4080:3000`.
-
-This means the frontend container still runs Next.js on internal port 3000, but it is available publicly on web port 80. The API container also runs internally on port 3000, but Docker exposes it publicly on port 4080.
-
-So, local Docker showing `3000:3000`, `4000:4000`, and `5000:5000` is expected. The ports only change to the EC2 layout after running this command on the EC2 machine:
+## Useful commands before recording
 
 ```powershell
-docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.override.yml up --build -d
+npm run verify
+docker compose up --build -d
+docker compose ps
+powershell -ExecutionPolicy Bypass -File scripts/smoke-test.ps1
+git status
+git log --oneline --decorate -12
 ```
+
+## Browser tabs to prepare
+
+1. http://localhost:3000
+2. http://localhost:3000/posts
+3. http://localhost:3000/database
+4. http://localhost:5000
+5. http://localhost:4000/health
+6. http://localhost:4000/count
+7. http://localhost:4000/stats
+8. http://localhost:4000/rss
+9. http://localhost:4000/rss/FRONTIERLLMS
