@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { appConfig, type GitCommit } from "@/config/app";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -17,29 +17,45 @@ const themes: { id: ThemePreference; label: string; note: string }[] = [
   { id: "system", label: "System", note: "Match this device" },
 ];
 
+const gitMainBranch = "main";
+
+type GitHubCommit = {
+  sha: string;
+  commit: { message: string; author: { date: string } | null };
+};
+
+async function fetchAllMainCommits() {
+  const commits: GitHubCommit[] = [];
+  let page = 1;
+
+  while (true) {
+    const response = await fetch(
+      `https://api.github.com/repos/andyr100/latrobe-content-distribution-hub/commits?sha=${gitMainBranch}&per_page=100&page=${page}`,
+      { headers: { Accept: "application/vnd.github+json" } },
+    );
+    if (!response.ok) throw new Error("GitHub history unavailable");
+
+    const entries = (await response.json()) as GitHubCommit[];
+    commits.push(...entries);
+    if (entries.length < 100) return commits;
+    page += 1;
+  }
+}
+
 export function SettingsWorkspace() {
   const { theme, setTheme, channelListLayout, setChannelListLayout, resetPreferences } =
     usePreferences();
   const { notify } = usePublishing();
   const [resetOpen, setResetOpen] = useState(false);
   const [gitHistoryOpen, setGitHistoryOpen] = useState(false);
-  const [gitCommits, setGitCommits] = useState<GitCommit[]>(appConfig.git.commits);
-  const [gitHistoryLoading, setGitHistoryLoading] = useState(false);
+  const [gitCommits, setGitCommits] = useState<GitCommit[]>([]);
+  const [gitHistoryLoading, setGitHistoryLoading] = useState(true);
   const [gitHistoryError, setGitHistoryError] = useState(false);
-  const loadGitHistory = async () => {
-    if (gitCommits.length || gitHistoryLoading) return;
+  const loadGitHistory = useCallback(async () => {
     setGitHistoryLoading(true);
     setGitHistoryError(false);
     try {
-      const response = await fetch(
-        `https://api.github.com/repos/andyr100/latrobe-content-distribution-hub/commits?sha=${encodeURIComponent(appConfig.git.branch)}&per_page=12`,
-        { headers: { Accept: "application/vnd.github+json" } },
-      );
-      if (!response.ok) throw new Error("GitHub history unavailable");
-      const entries = (await response.json()) as Array<{
-        sha: string;
-        commit: { message: string; author: { date: string } | null };
-      }>;
+      const entries = await fetchAllMainCommits();
       setGitCommits(
         entries.map((entry) => ({
           hash: entry.sha.slice(0, 7),
@@ -56,7 +72,12 @@ export function SettingsWorkspace() {
     } finally {
       setGitHistoryLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadGitHistory(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadGitHistory]);
   const resetWorkspace = () => {
     resetPreferences();
     setResetOpen(false);
@@ -160,10 +181,7 @@ export function SettingsWorkspace() {
         <GlassCard className="p-5 sm:p-7">
           <button
             type="button"
-            onClick={() => {
-              setGitHistoryOpen((open) => !open);
-              void loadGitHistory();
-            }}
+            onClick={() => setGitHistoryOpen((open) => !open)}
             aria-expanded={gitHistoryOpen}
             aria-controls="git-history-list"
             className="flex w-full items-start justify-between gap-4 rounded-xl text-left focus-visible:outline-offset-4"
@@ -176,17 +194,17 @@ export function SettingsWorkspace() {
                 <span className="eyebrow">Development history</span>
                 <span className="mt-1 block text-xl font-bold">Git commits</span>
                 <span className="muted mt-1 block text-sm">
-                  Recent commits in this project repository.
+                  Complete commit history from the main branch.
                 </span>
               </span>
             </span>
             <span className="flex shrink-0 items-center gap-3">
               <span className="hidden rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-right sm:block">
                 <span className="block text-2xl font-bold text-[var(--primary)]">
-                  {gitCommits.length || "—"}
+                  {gitHistoryLoading ? "…" : gitHistoryError ? "!" : gitCommits.length}
                 </span>
                 <span className="muted block text-xs font-semibold">
-                  recent commits on {appConfig.git.branch}
+                  all commits on {gitMainBranch}
                 </span>
               </span>
               <span className="grid size-11 place-items-center rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--primary)]">
@@ -196,7 +214,7 @@ export function SettingsWorkspace() {
           </button>
           {gitHistoryOpen && (
             <div id="git-history-list" className="mt-6 border-t border-[var(--border)] pt-5">
-              <p className="muted mb-3 text-xs font-semibold">Most recent commits first</p>
+              <p className="muted mb-3 text-xs font-semibold">All commits on main, newest first</p>
               <ol className="grid gap-2">
                 {gitCommits.map((commit, index) => (
                   <li
@@ -214,7 +232,7 @@ export function SettingsWorkspace() {
                         </code>
                         <span>{commit.date}</span>
                         <span>·</span>
-                        <span>{appConfig.git.branch}</span>
+                        <span>{gitMainBranch}</span>
                       </div>
                     </div>
                   </li>
@@ -226,15 +244,22 @@ export function SettingsWorkspace() {
                 </p>
               )}
               {!gitHistoryLoading && !gitCommits.length && (
-                <p className="muted rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm">
-                  {gitHistoryError
-                    ? "GitHub history is temporarily unavailable. "
-                    : "This build has no embedded history. "}
-                  Build commit: <code>{appConfig.git.commit}</code>.
-                </p>
+                <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm">
+                  <p className="muted">
+                    GitHub history is temporarily unavailable. Build commit:{" "}
+                    <code>{appConfig.git.commit}</code>.
+                  </p>
+                  <Button
+                    className="mt-3"
+                    variant="secondary"
+                    onClick={() => void loadGitHistory()}
+                  >
+                    Retry commit history
+                  </Button>
+                </div>
               )}
               <a
-                href={`${appConfig.git.repository}/commits/${appConfig.git.branch}`}
+                href={`${appConfig.git.repository}/commits/${gitMainBranch}`}
                 target="_blank"
                 rel="noreferrer"
                 className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border-strong)] px-4 text-sm font-bold text-[var(--primary)]"
