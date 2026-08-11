@@ -16,11 +16,7 @@ export async function GET() {
       ],
       order: [["title", "ASC"]],
     });
-    const topics = feeds.map((feed) => {
-      const value = feed.get({ plain: true }) as Record<string, unknown>;
-      return { ...value, name: value.title };
-    });
-    return ok(topics, 200, { count: topics.length, deprecated: true });
+    return ok(feeds, 200, { count: feeds.length });
   } catch (error) {
     return errorResponse(error);
   }

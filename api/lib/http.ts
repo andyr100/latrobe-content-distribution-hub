@@ -7,11 +7,22 @@ const corsHeaders = {
 };
 
 export function ok(data: unknown, status = 200, meta?: Record<string, unknown>) {
-  return NextResponse.json({ success: true, data, ...(meta ? { meta } : {}) }, { status, headers: corsHeaders });
+  return NextResponse.json(
+    { success: true, data, ...(meta ? { meta } : {}) },
+    { status, headers: corsHeaders },
+  );
 }
 
-export function failure(status: number, code: string, message: string, details: Record<string, unknown> = {}) {
-  return NextResponse.json({ success: false, error: { code, message, details } }, { status, headers: corsHeaders });
+export function failure(
+  status: number,
+  code: string,
+  message: string,
+  details: Record<string, unknown> = {},
+) {
+  return NextResponse.json(
+    { success: false, error: { code, message, details } },
+    { status, headers: corsHeaders },
+  );
 }
 
 export function options() {
@@ -19,13 +30,21 @@ export function options() {
 }
 
 export function xml(body: string, status = 200) {
-  return new NextResponse(body, { status, headers: { ...corsHeaders, "Content-Type": "application/rss+xml; charset=utf-8" } });
+  return new NextResponse(body, {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/rss+xml; charset=utf-8",
+    },
+  });
 }
 
 export async function readJson(request: Request): Promise<Record<string, unknown> | null> {
   try {
     const value: unknown = await request.json();
-    return value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+    return value !== null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null;
   } catch {
     return null;
   }
