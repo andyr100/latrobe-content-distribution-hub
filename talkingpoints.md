@@ -1,123 +1,102 @@
 # Assessment 2 video talking points
 
-Target length: about six minutes. Keep the browser tabs and PowerShell windows open before recording.
+Target: **4 minutes 30 seconds**, with 30 seconds spare. Keep every browser tab open and the demo post text copied before recording.
 
-## 1. Introduction — about 30 seconds
-
-“This is my Assessment 2 Content Distribution Hub. It extends my Assessment 1 frontend with a real backend, Sequelize ORM, a persistent SQLite database, RSS Server, separate RSS Client and Docker deployment.”
-
-“My Docker Compose stack has four services. Each service runs in its own container. The services are the frontend, API, RSS Client and a lightweight SQLite volume holder. They communicate through one private Docker network.”
-
-Do not say that all four services are in one container.
-
-## 2. Prove Docker is running — about 45 seconds
+## Before recording
 
 Run:
 
 ```powershell
+npm run verify
+docker compose up --build -d
 docker compose ps
 ```
 
-Point out:
+Prepare these tabs:
 
-- `frontend` is on port 3000 and is healthy.
-- `api` is on port 4000 and is healthy.
-- `rss-client` is on port 5000 and is healthy.
-- `sqlite` holds the named data volume and is healthy.
+1. Frontend dashboard — http://localhost:3000
+2. Posts — http://localhost:3000/posts
+3. Database inspector — http://localhost:3000/database
+4. RSS Client — http://localhost:5000
+5. Health — http://localhost:4000/health
+6. Count — http://localhost:4000/count
+7. Combined RSS — http://localhost:4000/rss
+8. GitHub Actions and commit history
 
-Then enter the API container:
+Select **CSIT News** in the RSS Client and leave auto refresh on. Use a short demo post assigned to CSIT News.
+
+## 0:00–0:20 — Introduction
+
+Say:
+
+“This is my Assessment 2 Content Distribution Hub. It extends my Assessment 1 frontend with a REST API, Sequelize ORM, persistent SQLite database, RSS Server, separate RSS Client and Docker deployment.”
+
+## 0:20–0:50 — Docker proof
+
+Show `docker compose ps`.
+
+Say:
+
+“Docker Compose runs four services in four containers: the frontend on port 3000, API on 4000, RSS Client on 5000, and a SQLite volume holder. All services are healthy.”
+
+Briefly run:
 
 ```powershell
 docker compose exec api sh
-```
-
-Inside the container, run:
-
-```sh
 pwd
-ls -la
 node -v
 exit
 ```
 
-Say: “This proves the backend is running inside its Docker container, not directly on my computer.”
+Say:
 
-## 3. Explain the database — about 50 seconds
+“This proves the backend is running inside its container. Local ports remain 3000, 4000 and 5000; the optional EC2 override maps the frontend to port 80 and API to 4080.”
 
-Open the README ER diagram or the Database tab at http://localhost:3000/database.
+## 0:50–1:20 — Database and ORM
+
+Open the Database inspector and switch between `Users`, `Posts`, `Feeds`, `PostFeeds`, `RequestCounters` and `SchemaMigrations`.
 
 Say:
 
-“Sequelize manages a versioned schema. A User authors many Posts. Posts and Feeds have a many-to-many relationship through PostFeeds. The interface calls feeds Channels because that wording is clearer for publishers. RequestCounter stores successful RSS requests.”
+“Sequelize migrations create the SQLite schema. A User authors Posts, and Posts belong to one or more Feeds through PostFeeds. Posts store the date, body, optional image and optional link. Foreign keys, indexes and transactions protect the data. The interface calls feeds Channels. This page is read-only and shows the real SQLite tables.”
 
-“Posts contain the author, publication date, body, optional image and optional link required by the rubric. Foreign keys and cascade rules protect the relationships. Indexes support publication dates, authors and feed lookups.”
+## 1:20–1:40 — API operations
 
-Use the table selector to show `Users`, `Posts`, `Feeds`, `PostFeeds`, `RequestCounters` and `SchemaMigrations`.
-
-Say: “This inspector is read-only. It proves that the screen is displaying real SQLite records.”
-
-## 4. Show operational endpoints — about 35 seconds
-
-Open:
-
-- http://localhost:4000/health
-- http://localhost:4000/count
-- http://localhost:4000/stats
+Show `/health`, `/count`, then briefly `/rss`.
 
 Say:
 
-“Health confirms that the API is running and SQLite is connected. Count shows successful RSS requests. Stats provides database-driven totals, posts per feed and the latest publication. These endpoints use the same predictable success response structure as the REST API.”
+“Health confirms the API and database are connected. Count stores successful RSS requests. The RSS endpoint returns the five newest posts as RSS 2.0 XML. A channel-specific endpoint such as `/rss/CSITNEWS` filters that XML.”
 
-## 5. Demonstrate create and RSS delivery — about 90 seconds
+## 1:40–3:05 — Create, persist and send RSS
 
-Open the RSS Client at http://localhost:5000 and select the channel you will publish to.
+On the Posts page, create a post with a title, body, author and **CSIT News** Channel.
 
-Say:
+Say while saving:
 
-“The RSS Client is a separate application. It represents a simple LMS. It automatically loads the selected feed and refreshes every 15 seconds. The spinner and countdown make the request timing visible.”
+“The frontend sends JSON to the API. The API validates it and saves the post and Channel relationship in one SQLite transaction.”
 
-Open the frontend at http://localhost:3000 and create a post:
+Open the Database inspector. Show the new row in `Posts`, then its relationship in `PostFeeds`.
 
-- Enter a clear title and body.
-- Select the same channel as the RSS Client.
-- Confirm publication.
-
-Open the Database tab and select `Posts`, then `PostFeeds`. Point out the new post row and join row.
-
-Return to the RSS Client. Wait for the countdown. The new post should appear automatically.
+Return to the RSS Client. The selected feed should update on its next 15-second countdown.
 
 Say:
 
-“The frontend sent JSON to the API. The API validated it, saved the post and relationship in one SQLite transaction, generated RSS XML, and the separate RSS Client received the new feed on its next refresh.”
+“The RSS Client is a completely separate Next.js application acting as a mock LMS. It requests and parses RSS XML; it does not access SQLite. Auto refresh can be switched on or off and defaults from an environment variable. The new database post has now travelled from the frontend, through the API and RSS Server, into the RSS Client.”
 
-Refresh `/count` and show that the number increased.
+Refresh `/count` and point out that it increased.
 
-## 6. Demonstrate update and delete — about 50 seconds
+## 3:05–3:35 — Complete CRUD
 
-In Posts, edit the new post. Change its title, publication date or assigned channel and save it. Show the database and correct RSS channel changing.
-
-Then delete the post and show that it disappears from Posts, PostFeeds and the RSS output.
+Return to Posts. Edit the demo title and save it, then delete the demo post.
 
 Say:
 
-“This demonstrates create, read, update and delete. Feed relationships update transactionally, and join rows cascade when the post is deleted.”
+“The same API supports create, read, update and delete. Updates replace the selected feed relationships transactionally. Deleting the post also cascades its PostFeed rows.”
 
-## 7. Show RSS endpoints — about 35 seconds
+Briefly refresh the Database inspector to show the demo row is gone.
 
-Open:
-
-- http://localhost:4000/rss
-- http://localhost:4000/rss/FRONTIERLLMS
-
-Say:
-
-“The main `/rss` endpoint sends the five newest unique posts. The channel endpoint sends only posts assigned to that channel. Both return RSS 2.0 XML from the same generator.”
-
-Point to an item link such as `http://localhost:3000/posts/12`.
-
-Say: “Each RSS item links to a readable frontend post page. The optional external link remains separate post metadata.”
-
-## 8. Prove persistence — about 35 seconds
+## 3:35–4:00 — Persistence
 
 Run:
 
@@ -125,51 +104,28 @@ Run:
 docker compose restart api
 ```
 
-After the API becomes healthy, refresh Posts, `/count` and the Database tab.
+Refresh `/health`, `/count`, or the Posts page after it becomes healthy.
 
 Say:
 
-“Restarting the API container does not remove the post data or request counter because SQLite is stored in a named Docker volume. I only use `docker compose down -v` when I deliberately want a completely fresh database.”
+“Restarting the API container does not remove posts or the request count because SQLite is stored in a named Docker volume. I only use `docker compose down -v` when deliberately resetting all data.”
 
-## 9. Code quality and GitHub — about 40 seconds
+## 4:00–4:30 — Code quality and GitHub
 
-Show the GitHub repository, Actions page, commit list and final tag.
+Show the repository, commits and successful Actions run.
 
 Say:
 
-“The code is divided into three Next.js applications and reusable API models, services, validation and migrations. Automated tests use a temporary SQLite database and cover CRUD, invalid data, rollback, RSS filtering, XML escaping, the five-item limit, counting and cascade deletion.”
+“The repository separates the frontend, API and RSS Client, with shared TypeScript contracts, reusable services, versioned migrations and an OpenAPI document. Seven isolated tests cover CRUD, validation, rollback, RSS XML, filtering, counting and cascade deletion. GitHub Actions runs formatting, lint, tests and all three production builds. The completed work is on main, with feature branches, pull requests, several commits and no node_modules or database files tracked.”
 
-“GitHub Actions installs all applications, checks formatting, runs lint and tests, and creates production builds. The completed submission is on main and tagged `assessment-2-final`. Node modules, builds, environment secrets and local databases are not tracked.”
+Finish:
 
-The Settings page reads recent commit details from the build instead of containing a manually typed history. GitHub remains the complete source of truth.
+“This demonstrates the complete Assessment 2 workflow: Docker, API CRUD, Sequelize and SQLite persistence, operational monitoring, and RSS Server delivery to a separate RSS Client.”
 
-## 10. EC2 port explanation — optional, 20 seconds
+## Recording rules
 
-Keep this brief because actual cloud deployment belongs to a later assessment.
-
-“Local Docker correctly shows frontend `3000:3000`, API `4000:4000` and RSS Client `5000:5000`. The format is host port followed by container port.”
-
-“The separate EC2 override maps public port 80 to frontend container port 3000 and public port 4080 to API container port 3000. The local configuration stays unchanged.”
-
-## Useful commands before recording
-
-```powershell
-npm run verify
-docker compose up --build -d
-docker compose ps
-powershell -ExecutionPolicy Bypass -File scripts/smoke-test.ps1
-git status
-git log --oneline --decorate -12
-```
-
-## Browser tabs to prepare
-
-1. http://localhost:3000
-2. http://localhost:3000/posts
-3. http://localhost:3000/database
-4. http://localhost:5000
-5. http://localhost:4000/health
-6. http://localhost:4000/count
-7. http://localhost:4000/stats
-8. http://localhost:4000/rss
-9. http://localhost:4000/rss/FRONTIERLLMS
+- Do not read every JSON or XML field; point to the important evidence.
+- Do not explain styling or Assessment 3 features.
+- Keep the RSS Client selected before starting so its 15-second wait happens while you explain.
+- If a restart is slow, continue explaining persistence instead of waiting silently.
+- Do not say the four services are in one container; they are four containers in one Compose stack.

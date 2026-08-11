@@ -1,8 +1,28 @@
 # La Trobe Content Distribution Hub
 
-Assessment 2 is a backend-driven content distribution system. A Next.js publishing frontend creates and manages posts through a REST API, Sequelize persists them in SQLite, the API publishes RSS 2.0 feeds, and a separate RSS Client displays those feeds as a mock LMS.
+This repository contains the complete Cloud Based Applications Assessment 2 submission. It extends the Assessment 1 interface into a backend-driven content distribution system: a publishing frontend creates and manages posts through a REST API, Sequelize persists them in SQLite, the API publishes RSS 2.0 XML, and a separate RSS Client receives and displays those feeds as a mock LMS.
 
 The three applications import their API envelopes and DTOs from the local `@latrobe/api-contract` package in `shared/`. This keeps browser clients and API responses aligned with one TypeScript source of truth; `docs/openapi.yaml` is the machine-readable HTTP contract.
+
+## Assessment requirements covered
+
+| Requirement                  | Evidence in this submission                                                                                                                                                                           |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Database schema and ORM      | Sequelize models and migrations represent users/authors, posts, publication dates, body content, images, links, feeds and many-to-many post/feed assignments. Data persists in a named SQLite volume. |
+| CRUD API                     | Posts can be created, listed/read, updated and deleted through predictable JSON endpoints. Validation and transactions prevent partial or invalid records.                                            |
+| RSS Server and Client        | The API generates combined and channel-specific RSS 2.0 XML. A separate Next.js RSS Client parses and displays a selected feed.                                                                       |
+| Operational endpoints        | `/health` checks the API and database, `/count` reports successful RSS requests, and `/stats` reports database-driven usage totals.                                                                   |
+| Docker                       | Four independently running Compose services provide reproducible frontend, API, RSS Client and SQLite-volume operation with health checks.                                                            |
+| Frontend/backend integration | Publishing, post management, dashboard statistics, channel pages and the read-only database inspector all use API/database data.                                                                      |
+| Code quality and GitHub      | Modular TypeScript, shared DTOs, migrations, automated tests, lint/build checks, GitHub Actions, feature branches and documented setup.                                                               |
+
+## Technology
+
+- Next.js 16.3.0, React 19.2.4 and TypeScript
+- Sequelize 6 with SQLite
+- Node.js 20.19.5 Docker images
+- Docker Compose
+- Node's built-in test runner and GitHub Actions
 
 ## Architecture
 
@@ -19,9 +39,45 @@ These are four services in one Docker Compose stack, not four services in one co
 flowchart LR
   Browser -->|JSON CRUD| Frontend[Frontend :3000]
   Frontend -->|REST| API[API and RSS Server :4000]
-  RSSClient[RSS Client :5000] -->|RSS XML every 15 seconds| API
+  RSSClient[RSS Client :5000] -->|RSS XML on selection / optional 15-second refresh| API
   API -->|Sequelize| SQLite[(SQLite named volume)]
 ```
+
+## Repository structure
+
+```text
+latrobe-content-distribution-hub/
+├── frontend/                 # Publishing/admin Next.js application
+│   ├── app/                  # Dashboard, posts, channels, database and About pages
+│   ├── components/           # Reusable interface and workflow components
+│   └── Dockerfile
+├── api/                      # REST API and RSS Server Next.js application
+│   ├── app/                  # JSON, operational and RSS route handlers
+│   ├── migrations/           # Versioned Sequelize schema changes
+│   ├── models/               # User, Post, Feed, PostFeed and RequestCounter
+│   ├── services/             # Post and RSS business logic
+│   ├── tests/                # Isolated API/RSS integration tests
+│   └── Dockerfile
+├── rss-client/               # Separate mock LMS Next.js application
+├── shared/                   # Shared API response and DTO TypeScript contract
+├── docs/openapi.yaml         # Machine-readable API contract
+├── scripts/smoke-test.ps1    # Docker health and persistence smoke test
+├── docker-compose.yml        # Local four-service stack
+└── docker-compose.ec2.override.yml
+```
+
+## Application pages
+
+| URL                              | Purpose                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------ |
+| `http://localhost:3000`          | Dashboard with database-driven post, feed and RSS-request statistics     |
+| `http://localhost:3000/posts`    | Create, filter, edit and delete posts and assign one or more Channels    |
+| `http://localhost:3000/channels` | Read-only fixed Channel catalogue and related posts                      |
+| `http://localhost:3000/database` | Read-only table inspector used to demonstrate actual SQLite persistence  |
+| `http://localhost:3000/workflow` | Explanation of the publishing-to-RSS workflow                            |
+| `http://localhost:3000/settings` | Application preferences and Git commit information                       |
+| `http://localhost:3000/about`    | Project scope, service ports and assessment-video embed                  |
+| `http://localhost:5000`          | Separate RSS Client/mock LMS with channel selection and refresh controls |
 
 ## Database schema
 
@@ -126,16 +182,35 @@ The machine-readable OpenAPI contract is in [`docs/openapi.yaml`](docs/openapi.y
 - Successful combined and channel RSS responses increment the persistent `/count` value.
 - RSS titles, descriptions, authors, dates, GUIDs, links and optional images are XML-escaped consistently.
 - Each item links to the readable frontend page at `http://localhost:3000/posts/:id`.
-- The standalone client loads a selected channel automatically and refreshes it every 15 seconds, with a spinner and countdown.
+- The standalone client loads a selected channel automatically. Its switch can pause or resume the 15-second refresh, with a spinner and countdown while enabled. `NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED=true` controls the switch's default state at build time.
 
 ## Run with Docker
 
-From a fresh clone:
+### Prerequisites
+
+- Docker Desktop with Docker Compose v2
+- Git
+- Node.js 20 only when running checks or applications outside Docker
+
+From a fresh clone, optionally copy `.env.example` to `.env`, then start the complete stack:
 
 ```bash
+cp .env.example .env
 docker compose up --build -d
 docker compose ps
 ```
+
+The `.env` file is optional because Compose supplies safe local defaults. It supports these presentation settings:
+
+```env
+# Initial state of the RSS Client auto-refresh switch
+NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED=true
+
+# YouTube/share/embed URL displayed on the About page; leave blank until uploaded
+NEXT_PUBLIC_ASSESSMENT_VIDEO_URL=
+```
+
+These values are compiled into their browser applications. Run `docker compose up --build -d` after changing them. The RSS Client switch still pauses or resumes refresh immediately; reloading restores its environment-configured default.
 
 Expected URLs:
 
@@ -208,6 +283,20 @@ docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.ov
 | RSS Client |           5000 | private by default |
 
 Allow inbound TCP 80 and 4080 in the EC2 security group. Port 5000 is optional. The browser-facing frontend uses the public API URL from `ec2.env`, while the RSS Client proxy reaches `http://api:3000` on Docker's private network.
+
+## Assessment video
+
+The final demonstration should be no longer than five minutes. A direct recording sequence is provided in [`talkingpoints.md`](talkingpoints.md). It shows:
+
+1. the four healthy Docker services and an API container shell;
+2. the Sequelize/SQLite schema and real table rows;
+3. `/health`, `/count` and `/stats`;
+4. a post being created in the frontend and stored in SQLite;
+5. that post arriving automatically in the separate RSS Client;
+6. update/delete behaviour and persistent storage after an API restart; and
+7. GitHub branches, commits, tests and successful Actions checks.
+
+After uploading the recording, set `NEXT_PUBLIC_ASSESSMENT_VIDEO_URL` and rebuild the frontend to display it on the About page. Standard YouTube watch links and `youtu.be` share links are converted to embed URLs automatically.
 
 ## Submission workflow
 
