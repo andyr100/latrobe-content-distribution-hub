@@ -12,6 +12,10 @@ type FeedItem = {
   author: string;
 };
 
+const AUTO_REFRESH_INTERVAL_SECONDS = 15;
+const AUTO_REFRESH_DEFAULT =
+  process.env.NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED?.toLowerCase() !== "false";
+
 function text(element: Element, selector: string) {
   return element.querySelector(selector)?.textContent?.trim() ?? "";
 }
@@ -25,7 +29,8 @@ export default function RssClientPage() {
   const [loading, setLoading] = useState(true);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(15);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(AUTO_REFRESH_DEFAULT);
+  const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(AUTO_REFRESH_INTERVAL_SECONDS);
 
   const refreshCount = useCallback(async () => {
     const response = await fetch("/api/count");
@@ -98,23 +103,30 @@ export default function RssClientPage() {
   useEffect(() => {
     if (!selectedCode) return;
     const initial = window.setTimeout(() => void loadFeed(), 0);
+    return () => window.clearTimeout(initial);
+  }, [loadFeed, selectedCode]);
+
+  useEffect(() => {
+    if (!selectedCode || !autoRefreshEnabled) return;
     const refresh = window.setInterval(() => {
       void loadFeed();
-      setSecondsUntilRefresh(15);
-    }, 15_000);
+      setSecondsUntilRefresh(AUTO_REFRESH_INTERVAL_SECONDS);
+    }, AUTO_REFRESH_INTERVAL_SECONDS * 1_000);
     const countdown = window.setInterval(
-      () => setSecondsUntilRefresh((seconds) => (seconds <= 1 ? 15 : seconds - 1)),
+      () =>
+        setSecondsUntilRefresh((seconds) =>
+          seconds <= 1 ? AUTO_REFRESH_INTERVAL_SECONDS : seconds - 1,
+        ),
       1_000,
     );
     return () => {
-      window.clearTimeout(initial);
       window.clearInterval(refresh);
       window.clearInterval(countdown);
     };
-  }, [loadFeed, selectedCode]);
+  }, [autoRefreshEnabled, loadFeed, selectedCode]);
 
   const countdownStyle = {
-    "--progress": `${(secondsUntilRefresh / 15) * 360}deg`,
+    "--progress": `${(secondsUntilRefresh / AUTO_REFRESH_INTERVAL_SECONDS) * 360}deg`,
   } as CSSProperties & Record<"--progress", string>;
   const endpoint = selectedCode ? `/rss/${selectedCode}` : "/rss/:channelCode";
 
@@ -142,7 +154,7 @@ export default function RssClientPage() {
               disabled={loading}
               onChange={(event) => {
                 setSelectedCode(event.target.value);
-                setSecondsUntilRefresh(15);
+                setSecondsUntilRefresh(AUTO_REFRESH_INTERVAL_SECONDS);
               }}
             >
               <option value="">Choose a channel</option>
@@ -157,14 +169,35 @@ export default function RssClientPage() {
         <div className="meta muted">
           <span>Canonical RSS endpoint: {endpoint}</span>
           <span className="refresh-status">
-            Refreshes every 15 seconds{" "}
-            <span
-              className="countdown-clock"
-              style={countdownStyle}
-              aria-label={`${secondsUntilRefresh} seconds until the next refresh`}
-            >
-              <span>{secondsUntilRefresh}</span>
-            </span>
+            <label className="refresh-toggle">
+              <input
+                type="checkbox"
+                role="switch"
+                checked={autoRefreshEnabled}
+                onChange={(event) => {
+                  setAutoRefreshEnabled(event.target.checked);
+                  setSecondsUntilRefresh(AUTO_REFRESH_INTERVAL_SECONDS);
+                }}
+              />
+              <span className="toggle-track" aria-hidden="true">
+                <span className="toggle-thumb" />
+              </span>
+              Auto refresh
+            </label>
+            {autoRefreshEnabled ? (
+              <>
+                <span>every {AUTO_REFRESH_INTERVAL_SECONDS} seconds</span>
+                <span
+                  className="countdown-clock"
+                  style={countdownStyle}
+                  aria-label={`${secondsUntilRefresh} seconds until the next refresh`}
+                >
+                  <span>{secondsUntilRefresh}</span>
+                </span>
+              </>
+            ) : (
+              <span className="paused-status">Paused</span>
+            )}
           </span>
           <span>
             Successful RSS requests: <strong>{requestCount ?? "—"}</strong>

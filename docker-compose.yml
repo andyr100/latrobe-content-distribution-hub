@@ -7,10 +7,12 @@ services:
         contracts: ./shared
       args:
         NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+        NEXT_PUBLIC_ASSESSMENT_VIDEO_URL: ${NEXT_PUBLIC_ASSESSMENT_VIDEO_URL:-}
         GIT_COMMIT_SHA: ${GIT_COMMIT_SHA:-unavailable}
         GIT_BRANCH: ${GIT_BRANCH:-main}
     environment:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_ASSESSMENT_VIDEO_URL: ${NEXT_PUBLIC_ASSESSMENT_VIDEO_URL:-}
     ports:
       - "3000:3000"
     depends_on:
@@ -63,8 +65,11 @@ services:
       context: ./rss-client
       additional_contexts:
         contracts: ./shared
+      args:
+        NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED: ${NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED:-true}
     environment:
       API_BASE_URL: http://api:4000
+      NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED: ${NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED:-true}
     ports:
       - "5000:5000"
     depends_on:

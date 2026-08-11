@@ -7,7 +7,9 @@ RUN npm ci
 FROM node:20.19.5-bookworm-slim AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+ARG NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED=true
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED=$NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY --from=contracts . /shared
 COPY . .

@@ -4,7 +4,27 @@ import { Badge } from "@/components/ui/Badge";
 import { Icon } from "@/components/ui/Icon";
 import { appConfig } from "@/config/app";
 
+function assessmentVideoUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_ASSESSMENT_VIDEO_URL?.trim();
+  if (!configuredUrl) return null;
+
+  try {
+    const url = new URL(configuredUrl);
+    if (url.hostname === "youtu.be") {
+      return `https://www.youtube.com/embed/${url.pathname.slice(1)}`;
+    }
+    if (url.hostname.endsWith("youtube.com") && url.searchParams.get("v")) {
+      return `https://www.youtube.com/embed/${url.searchParams.get("v")}`;
+    }
+    return configuredUrl;
+  } catch {
+    return null;
+  }
+}
+
 export default function AboutPage() {
+  const videoUrl = assessmentVideoUrl();
+
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
@@ -76,6 +96,45 @@ export default function AboutPage() {
           </dl>
         </GlassCard>
       </div>
+      <GlassCard className="mt-6 p-6 sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow">Assessment demonstration</p>
+            <h2 className="mt-2 text-2xl font-bold">Assessment 2 video walkthrough</h2>
+            <p className="muted mt-2 max-w-3xl leading-7">
+              This video demonstrates Docker, the API and SQLite schema, post CRUD, persistent
+              storage, operational endpoints, and RSS delivery to the separate mock LMS client.
+            </p>
+          </div>
+          <Badge tone={videoUrl ? "cyan" : "neutral"}>
+            {videoUrl ? "Video available" : "Video link pending"}
+          </Badge>
+        </div>
+        <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)]">
+          {videoUrl ? (
+            <iframe
+              className="aspect-video w-full"
+              src={videoUrl}
+              title="Assessment 2 video walkthrough"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          ) : (
+            <div className="grid aspect-video place-items-center p-8 text-center">
+              <div className="max-w-xl">
+                <span className="mx-auto grid size-16 place-items-center rounded-full bg-[var(--primary)] text-white">
+                  <Icon name="workflow" className="size-7" />
+                </span>
+                <h3 className="mt-5 text-xl font-bold">Video placeholder ready</h3>
+                <p className="muted mt-3 leading-7">
+                  Set <code>NEXT_PUBLIC_ASSESSMENT_VIDEO_URL</code> to a YouTube video, YouTube
+                  embed URL, or another embeddable HTTPS video URL, then rebuild the frontend.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </GlassCard>
     </div>
   );
 }

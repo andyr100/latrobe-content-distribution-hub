@@ -124,6 +124,52 @@ button.primary {
   align-items: center;
   gap: 7px;
 }
+.refresh-toggle {
+  display: inline-flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-size: inherit;
+}
+.refresh-toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.toggle-track {
+  display: inline-flex;
+  align-items: center;
+  width: 34px;
+  height: 20px;
+  padding: 2px;
+  border-radius: 999px;
+  background: #aeb5c7;
+  transition: background 0.2s ease;
+}
+.toggle-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(24, 32, 58, 0.3);
+  transition: transform 0.2s ease;
+}
+.refresh-toggle input:checked + .toggle-track {
+  background: var(--primary);
+}
+.refresh-toggle input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(14px);
+}
+.refresh-toggle input:focus-visible + .toggle-track {
+  outline: 3px solid rgba(85, 70, 217, 0.25);
+  outline-offset: 2px;
+}
+.paused-status {
+  color: var(--danger);
+  font-weight: 700;
+}
 .countdown-clock {
   display: grid;
   place-items: center;
