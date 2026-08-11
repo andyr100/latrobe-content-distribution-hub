@@ -6,7 +6,10 @@ RUN npm ci
 FROM node:20.19.5-bookworm-slim AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+ARG GIT_COMMIT_SHA=unavailable
+ARG GIT_BRANCH=docker-build
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV GIT_COMMIT_SHA=$GIT_COMMIT_SHA GIT_BRANCH=$GIT_BRANCH
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
