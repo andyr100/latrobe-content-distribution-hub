@@ -1,7 +1,17 @@
 import type { ReactNode } from "react";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 
-export function PageHeader({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) {
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  action,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
   return (
     <>
       <Breadcrumbs current={title} />

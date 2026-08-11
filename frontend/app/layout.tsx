@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: `%s · ${appConfig.name}`,
   },
   description:
-    "A full-stack content hub publishing database-backed CSIT posts to topic RSS feeds.",
+    "A full-stack content hub publishing database-backed CSIT posts to channel RSS feeds.",
 };
 
 export default function RootLayout({
@@ -34,7 +34,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <Script id="theme-bootstrap" strategy="beforeInteractive">
           {`(function(){try{var p=JSON.parse(localStorage.getItem('lt-content-hub.preferences.v1')||'{}');var t=p.theme==='system'||!p.theme?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p.theme;document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}})()`}
@@ -47,7 +51,15 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
-        <PreferencesProvider><SessionProvider><ContentProvider><PublishingProvider><AppShell>{children}</AppShell></PublishingProvider></ContentProvider></SessionProvider></PreferencesProvider>
+        <PreferencesProvider>
+          <SessionProvider>
+            <ContentProvider>
+              <PublishingProvider>
+                <AppShell>{children}</AppShell>
+              </PublishingProvider>
+            </ContentProvider>
+          </SessionProvider>
+        </PreferencesProvider>
       </body>
     </html>
   );

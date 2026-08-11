@@ -1,29 +1,22 @@
+type GitCommit = { hash: string; date: string; message: string };
+
+function gitCommits(): GitCommit[] {
+  try {
+    return JSON.parse(process.env.NEXT_PUBLIC_GIT_HISTORY ?? "[]") as GitCommit[];
+  } catch {
+    return [];
+  }
+}
+
 export const appConfig = {
   name: "La Trobe Content Distribution Hub",
   assessment: "Cloud Based Applications — Assessment 2",
   version: "2.0.0",
   student: { name: "Andy Rea", number: "22809185" },
   git: {
-    commitCount: 48,
-    branch: "feature/a2-split-full-stack",
-    commits: [
-      { hash: "HEAD", date: "10 Aug 2026", message: "chore(settings): refresh Git history" },
-      { hash: "eb505d3", date: "10 Aug 2026", message: "docs(video): add deployment and RSS demonstration notes" },
-      { hash: "e0f43b0", date: "10 Aug 2026", message: "feat(docker): add local and EC2 service configurations" },
-      { hash: "d686c89", date: "10 Aug 2026", message: "feat(rss): add RSS server and standalone client" },
-      { hash: "5d9bdde", date: "10 Aug 2026", message: "feat(api): add SQLite REST API and database inspector" },
-      { hash: "3de4992", date: "10 Aug 2026", message: "feat(frontend): add channel publishing workspace" },
-      { hash: "9447e1e", date: "10 Aug 2026", message: "chore(project): prepare assessment 2 workspace" },
-      { hash: "43d0386", date: "27 Jul 2026, 21:25", message: "chore(git): ignore MP4 video files" },
-      { hash: "e7b391b", date: "27 Jul 2026, 20:55", message: "fix(theme): restore theme transition duration" },
-      { hash: "1cf3676", date: "27 Jul 2026, 20:54", message: "docs(readme): document application and architecture" },
-      { hash: "26ef05e", date: "27 Jul 2026, 20:52", message: "fix(theme): prevent startup theme fade" },
-      { hash: "df898c3", date: "27 Jul 2026, 20:02", message: "feat(posts): add post deletion controls" },
-      { hash: "afc8e71", date: "27 Jul 2026, 19:29", message: "docs(project): add student details" },
-      { hash: "76f33b4", date: "27 Jul 2026, 15:57", message: "feat(channels): add persistent horizontal channel layout" },
-      { hash: "a4fa888", date: "27 Jul 2026, 15:50", message: "feat(settings): add commit times and kebab control" },
-      { hash: "90aa494", date: "27 Jul 2026, 15:44", message: "feat(settings): add expandable chronological Git history" },
-      { hash: "cf8960e", date: "27 Jul 2026, 15:41", message: "feat(settings): show project git commit history" },
-    ],
+    branch: process.env.NEXT_PUBLIC_GIT_BRANCH ?? "unknown",
+    commit: process.env.NEXT_PUBLIC_GIT_COMMIT ?? "unknown",
+    commits: gitCommits(),
+    repository: "https://github.com/andyr100/latrobe-content-distribution-hub",
   },
 } as const;

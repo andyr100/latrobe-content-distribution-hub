@@ -5,11 +5,19 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: "sm" | "md";
 };
 
-export function Button({ className = "", variant = "primary", size = "md", ...props }: ButtonProps) {
+export function Button({
+  className = "",
+  variant = "primary",
+  size = "md",
+  ...props
+}: ButtonProps) {
   const variants = {
-    primary: "border-transparent bg-[var(--primary)] text-white shadow-[0_8px_24px_color-mix(in_srgb,var(--primary)_25%,transparent)] hover:bg-[var(--primary-hover)]",
-    secondary: "border-[var(--border-strong)] bg-[var(--surface-strong)] text-[var(--text)] hover:border-[var(--primary)]",
-    ghost: "border-transparent bg-transparent text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]",
+    primary:
+      "border-transparent bg-[var(--primary)] text-white shadow-[0_8px_24px_color-mix(in_srgb,var(--primary)_25%,transparent)] hover:bg-[var(--primary-hover)]",
+    secondary:
+      "border-[var(--border-strong)] bg-[var(--surface-strong)] text-[var(--text)] hover:border-[var(--primary)]",
+    ghost:
+      "border-transparent bg-transparent text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]",
     danger: "border-transparent bg-[var(--danger)] text-white hover:brightness-110",
   };
   return (

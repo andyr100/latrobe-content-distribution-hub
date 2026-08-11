@@ -1,2 +1,5 @@
-import { TopicsWorkspace } from "@/components/topics/TopicsWorkspace";
-export default function TopicsPage() { return <TopicsWorkspace />; }
+import { redirect } from "next/navigation";
+
+export default function LegacyTopicsPage() {
+  redirect("/channels");
+}
