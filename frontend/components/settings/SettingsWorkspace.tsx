@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { appConfig } from "@/config/app";
+import { appConfig, type GitCommit } from "@/config/app";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Icon } from "@/components/ui/Icon";
@@ -23,6 +23,40 @@ export function SettingsWorkspace() {
   const { notify } = usePublishing();
   const [resetOpen, setResetOpen] = useState(false);
   const [gitHistoryOpen, setGitHistoryOpen] = useState(false);
+  const [gitCommits, setGitCommits] = useState<GitCommit[]>(appConfig.git.commits);
+  const [gitHistoryLoading, setGitHistoryLoading] = useState(false);
+  const [gitHistoryError, setGitHistoryError] = useState(false);
+  const loadGitHistory = async () => {
+    if (gitCommits.length || gitHistoryLoading) return;
+    setGitHistoryLoading(true);
+    setGitHistoryError(false);
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/andyr100/latrobe-content-distribution-hub/commits?sha=${encodeURIComponent(appConfig.git.branch)}&per_page=12`,
+        { headers: { Accept: "application/vnd.github+json" } },
+      );
+      if (!response.ok) throw new Error("GitHub history unavailable");
+      const entries = (await response.json()) as Array<{
+        sha: string;
+        commit: { message: string; author: { date: string } | null };
+      }>;
+      setGitCommits(
+        entries.map((entry) => ({
+          hash: entry.sha.slice(0, 7),
+          date: entry.commit.author?.date
+            ? new Intl.DateTimeFormat("en-AU", { dateStyle: "medium" }).format(
+                new Date(entry.commit.author.date),
+              )
+            : "Unknown date",
+          message: entry.commit.message.split("\n")[0],
+        })),
+      );
+    } catch {
+      setGitHistoryError(true);
+    } finally {
+      setGitHistoryLoading(false);
+    }
+  };
   const resetWorkspace = () => {
     resetPreferences();
     setResetOpen(false);
@@ -126,7 +160,10 @@ export function SettingsWorkspace() {
         <GlassCard className="p-5 sm:p-7">
           <button
             type="button"
-            onClick={() => setGitHistoryOpen((open) => !open)}
+            onClick={() => {
+              setGitHistoryOpen((open) => !open);
+              void loadGitHistory();
+            }}
             aria-expanded={gitHistoryOpen}
             aria-controls="git-history-list"
             className="flex w-full items-start justify-between gap-4 rounded-xl text-left focus-visible:outline-offset-4"
@@ -146,7 +183,7 @@ export function SettingsWorkspace() {
             <span className="flex shrink-0 items-center gap-3">
               <span className="hidden rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-right sm:block">
                 <span className="block text-2xl font-bold text-[var(--primary)]">
-                  {appConfig.git.commits.length || "—"}
+                  {gitCommits.length || "—"}
                 </span>
                 <span className="muted block text-xs font-semibold">
                   recent commits on {appConfig.git.branch}
@@ -161,7 +198,7 @@ export function SettingsWorkspace() {
             <div id="git-history-list" className="mt-6 border-t border-[var(--border)] pt-5">
               <p className="muted mb-3 text-xs font-semibold">Most recent commits first</p>
               <ol className="grid gap-2">
-                {appConfig.git.commits.map((commit, index) => (
+                {gitCommits.map((commit, index) => (
                   <li
                     key={commit.hash}
                     className="flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3.5 sm:flex-row sm:items-center"
@@ -183,10 +220,17 @@ export function SettingsWorkspace() {
                   </li>
                 ))}
               </ol>
-              {!appConfig.git.commits.length && (
+              {gitHistoryLoading && (
                 <p className="muted rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm">
-                  This Docker image was built without Git history. Build commit:{" "}
-                  <code>{appConfig.git.commit}</code>.
+                  Loading current commit history from GitHub…
+                </p>
+              )}
+              {!gitHistoryLoading && !gitCommits.length && (
+                <p className="muted rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4 text-sm">
+                  {gitHistoryError
+                    ? "GitHub history is temporarily unavailable. "
+                    : "This build has no embedded history. "}
+                  Build commit: <code>{appConfig.git.commit}</code>.
                 </p>
               )}
               <a

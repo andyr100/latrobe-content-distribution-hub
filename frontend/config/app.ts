@@ -1,4 +1,4 @@
-type GitCommit = { hash: string; date: string; message: string };
+export type GitCommit = { hash: string; date: string; message: string };
 
 function gitCommits(): GitCommit[] {
   try {
