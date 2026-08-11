@@ -1,3 +1,19 @@
 import { NextResponse } from "next/server";
 import { apiFetch } from "../../../lib/api";
-export async function GET() { try { const response = await apiFetch("/api/topics"); return new NextResponse(await response.text(), { status: response.status, headers: { "Content-Type": "application/json" } }); } catch { return NextResponse.json({ success: false, error: { message: "The Content Distribution API is unavailable" } }, { status: 503 }); } }
+export async function GET() {
+  try {
+    const response = await apiFetch("/api/feeds");
+    return new NextResponse(await response.text(), {
+      status: response.status,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        error: { message: "The Content Distribution API is unavailable" },
+      },
+      { status: 503 },
+    );
+  }
+}
