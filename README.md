@@ -2,6 +2,8 @@
 
 Assessment 2 is a backend-driven content distribution system. A Next.js publishing frontend creates and manages posts through a REST API, Sequelize persists them in SQLite, the API publishes RSS 2.0 feeds, and a separate RSS Client displays those feeds as a mock LMS.
 
+The three applications import their API envelopes and DTOs from the local `@latrobe/api-contract` package in `shared/`. This keeps browser clients and API responses aligned with one TypeScript source of truth; `docs/openapi.yaml` is the machine-readable HTTP contract.
+
 ## Architecture
 
 | Compose service | Responsibility                                                         | Technology                                | Local port |

@@ -1,12 +1,9 @@
+import type { ApiEnvelope, FeedDto, PostDto } from "@latrobe/api-contract";
 import type { Channel, DashboardStats, InternalPost, MockUser } from "@/types";
 
 export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000"
 ).replace(/\/$/, "");
-
-type ApiEnvelope<T> =
-  | { success: true; data: T; meta?: Record<string, number | string | boolean> }
-  | { success: false; error: { message: string } };
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -22,28 +19,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   return payload.data;
 }
 
-type ApiFeed = {
-  id: string;
-  code: string;
-  title: string;
-  description: string;
-  slug: string;
-  posts?: Array<{ id: number }>;
-};
-
-type ApiPost = {
-  id: number;
-  title: string;
-  body: string;
-  authorId: string;
-  publishedAt: string;
-  imageUrl?: string | null;
-  externalLink?: string | null;
-  author?: MockUser;
-  feeds?: ApiFeed[];
-};
-
-export function mapFeed(feed: ApiFeed): Channel {
+export function mapFeed(feed: FeedDto): Channel {
   return {
     id: feed.id,
     code: feed.code,
@@ -54,7 +30,7 @@ export function mapFeed(feed: ApiFeed): Channel {
   };
 }
 
-export function mapPost(post: ApiPost): InternalPost {
+export function mapPost(post: PostDto): InternalPost {
   return {
     id: String(post.id),
     title: post.title,
@@ -74,11 +50,11 @@ export async function getUsers() {
 }
 
 export async function getChannels() {
-  return (await apiRequest<ApiFeed[]>("/api/feeds")).map(mapFeed);
+  return (await apiRequest<FeedDto[]>("/api/feeds")).map(mapFeed);
 }
 
 export async function getPosts() {
-  return (await apiRequest<ApiPost[]>("/api/posts?pageSize=100")).map(mapPost);
+  return (await apiRequest<PostDto[]>("/api/posts?pageSize=100")).map(mapPost);
 }
 
 export async function getStats() {
@@ -91,7 +67,7 @@ type PostInput = Omit<InternalPost, "id" | "authorName" | "publishedAt" | "statu
 
 export async function createPost(input: PostInput) {
   return mapPost(
-    await apiRequest<ApiPost>("/api/posts", {
+    await apiRequest<PostDto>("/api/posts", {
       method: "POST",
       body: JSON.stringify(input),
     }),
@@ -100,7 +76,7 @@ export async function createPost(input: PostInput) {
 
 export async function updatePost(id: string, input: Partial<PostInput>) {
   return mapPost(
-    await apiRequest<ApiPost>(`/api/posts/${id}`, {
+    await apiRequest<PostDto>(`/api/posts/${id}`, {
       method: "PATCH",
       body: JSON.stringify(input),
     }),

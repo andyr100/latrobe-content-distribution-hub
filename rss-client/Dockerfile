@@ -1,5 +1,6 @@
 FROM node:20.19.5-bookworm-slim AS dependencies
 WORKDIR /app
+COPY --from=contracts . /shared
 COPY package.json package-lock.json ./
 RUN npm ci
 
@@ -8,6 +9,7 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=contracts . /shared
 COPY . .
 RUN npm run build
 

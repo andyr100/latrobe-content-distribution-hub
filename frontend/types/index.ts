@@ -16,13 +16,7 @@ export type Channel = {
   postCount: number;
 };
 
-export type DashboardStats = {
-  totalPosts: number;
-  totalFeeds: number;
-  successfulRssRequests: number;
-  latestPost: { id: number; title: string; publishedAt: string } | null;
-  postsPerFeed: Array<{ id: string; code: string; title: string; postCount: number }>;
-};
+export type DashboardStats = DashboardStatsDto;
 
 export type InternalPost = {
   id: string;
@@ -45,3 +39,4 @@ export type PublishRequest = {
   imageUrl?: string | null;
   externalLink?: string | null;
 };
+import type { DashboardStatsDto } from "@latrobe/api-contract";

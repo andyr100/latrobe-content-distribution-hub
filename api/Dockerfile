@@ -1,18 +1,21 @@
 FROM node:20.19.5-bookworm-slim AS dependencies
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
+COPY --from=contracts . /shared
 COPY package.json package-lock.json ./
 RUN npm_config_build_from_source=true npm ci
 
 FROM node:20.19.5-bookworm-slim AS builder
 WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=contracts . /shared
 COPY . .
 RUN npm run build
 
 FROM node:20.19.5-bookworm-slim AS production-dependencies
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
+COPY --from=contracts . /shared
 COPY package.json package-lock.json ./
 RUN npm_config_build_from_source=true npm ci --omit=dev && npm cache clean --force
 
