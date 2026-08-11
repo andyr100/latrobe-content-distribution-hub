@@ -1,0 +1,24 @@
+# Use with: docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.override.yml up --build -d
+# `!override` requires Docker Compose v2.24.4 or later and replaces the local port mappings.
+services:
+  frontend:
+    build:
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:?Set PUBLIC_API_BASE_URL in ec2.env}
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:?Set PUBLIC_API_BASE_URL in ec2.env}
+    ports: !override
+      - "80:3000"
+
+  api:
+    environment:
+      PORT: "3000"
+      APP_BASE_URL: ${PUBLIC_API_BASE_URL:?Set PUBLIC_API_BASE_URL in ec2.env}
+      FRONTEND_BASE_URL: ${PUBLIC_FRONTEND_BASE_URL:?Set PUBLIC_FRONTEND_BASE_URL in ec2.env}
+    ports: !override
+      - "4080:3000"
+
+  rss-client:
+    environment:
+      API_BASE_URL: http://api:3000
+    ports: !override []

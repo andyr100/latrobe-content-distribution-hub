@@ -1,160 +1,212 @@
 # La Trobe Content Distribution Hub
 
-La Trobe Content Distribution Hub is a responsive frontend prototype for **Cloud Based Applications — Assessment 1**. It gives lecturers and administrators a single workspace to create, classify and distribute university updates to subject channels. It also lets them review a curated set of synthetic external RSS articles and republish a selected article through the same channel workflow.
+Assessment 2 is a backend-driven content distribution system. A Next.js publishing frontend creates and manages posts through a REST API, Sequelize persists them in SQLite, the API publishes RSS 2.0 feeds, and a separate RSS Client displays those feeds as a mock LMS.
 
-This is intentionally a client-side demonstration. It does not include a backend, database, real authentication, live RSS retrieval or RSS generation, cloud deployment, LMS delivery, or network calls to external feeds.
+## Architecture
 
-## Application functionality and features
+| Compose service | Responsibility                                                         | Technology                                | Local port |
+| --------------- | ---------------------------------------------------------------------- | ----------------------------------------- | ---------: |
+| `frontend`      | Publishing UI, dashboard, post reader and read-only database inspector | Next.js, React, TypeScript                |       3000 |
+| `api`           | REST API, RSS Server, validation, migrations and SQLite ownership      | Next.js Route Handlers, Sequelize, SQLite |       4000 |
+| `rss-client`    | Separate mock LMS that parses and displays RSS                         | Next.js, React, TypeScript                |       5000 |
+| `sqlite`        | Lightweight holder for the named SQLite volume                         | BusyBox                                   |          — |
 
-### Dashboard and navigation
+These are four services in one Docker Compose stack, not four services in one container. Each service runs in its own container on the private Compose network. Only the API mounts the database at `/app/data/content-hub.sqlite`; the RSS Client never accesses SQLite directly.
 
-- Dashboard summary cards, recent activity and quick links to common tasks.
-- Responsive application shell with a desktop sidebar, mobile drawer, breadcrumbs and a skip link.
-- Six routes: dashboard, posts, channels, workflow, about and settings.
-- A mock user selector starts each new page load. The selected user is used as the author when publishing, but is not authentication and is not saved.
+```mermaid
+flowchart LR
+  Browser -->|JSON CRUD| Frontend[Frontend :3000]
+  Frontend -->|REST| API[API and RSS Server :4000]
+  RSSClient[RSS Client :5000] -->|RSS XML every 15 seconds| API
+  API -->|Sequelize| SQLite[(SQLite named volume)]
+```
 
-### Posts and distribution workflow
+## Database schema
 
-- Create a validated internal post with a title, body, classification and one or more channel destinations.
-- Browse internal posts and the External RSS catalogue in separate tabs.
-- Search and filter posts by classification, author, channel and source as appropriate.
-- Delete an individual internal post directly from its tile, with a confirmation dialog. External RSS items are source content and remain read-only.
-- Republish an external article to selected subject channels using the same confirmation and simulated publishing workflow.
-- A three-second locked publishing state, followed by a dismissible success toast, makes the future server-side delivery step visible without pretending that delivery has occurred.
-- Contextual links support `/posts?tab=external`, `/posts?create=1` and `/posts?channel=<id>`.
+Versioned Sequelize migrations create the schema. Startup applies only migrations that have not previously been recorded in `SchemaMigrations`, then the idempotent seed adds the four demo users, eight fixed feeds, sample posts, relationships and request counter. Production startup does not use `sequelize.sync()`.
 
-### Channels and external content
+```mermaid
+erDiagram
+  USER ||--o{ POST : authors
+  POST ||--o{ POST_FEED : assigned_to
+  FEED ||--o{ POST_FEED : contains
+  USER {
+    string id PK
+    string name
+    string email UK
+    string role
+  }
+  POST {
+    integer id PK
+    string title
+    text body
+    string authorId FK
+    datetime publishedAt
+    string imageUrl
+    string externalLink
+  }
+  FEED {
+    string id PK
+    string code UK
+    string title
+    string description
+    string slug UK
+  }
+  POST_FEED {
+    integer postId PK,FK
+    string feedId PK,FK
+  }
+  REQUEST_COUNTER {
+    string key PK
+    integer count
+  }
+```
 
-- Twelve seeded La Trobe subject channels, with add, delete and inspection workflows.
-- Choose between a grid layout and a persistent one-channel-per-row horizontal layout.
-- Five configurable external RSS sources, each contributing ten original synthetic articles when subscribed.
-- Ten defined classifications shared by internal posts and external articles.
+Foreign keys protect author and feed relationships. Join rows cascade when a post is deleted. Indexes cover publication dates, authors, feed codes/slugs and join-table lookup keys. The first migration also upgrades an earlier installation to the explicit `Feed`/`PostFeed` schema and removes the obsolete classification column without requiring the Docker volume to be deleted.
 
-### Settings and persistence
+The UI calls feeds **Channels** because that is clearer to a publisher. The database calls them feeds because each record explicitly represents an RSS feed.
 
-- Light, dark and system theme choices are saved in the browser. The saved theme is applied before the interactive app opens, preventing a light/dark startup flash or fade.
-- RSS subscriptions and the preferred channel layout are saved per browser.
-- The Settings page includes a collapsible, oldest-to-newest Git history tile, with one row per commit and its hash, date, time, branch and message.
-- **Reset workspace** removes local changes and restores the seed posts, channels, subscriptions, layout and system theme.
+## API contract
 
-### Accessibility and responsive behaviour
+JSON success responses use:
 
-- Semantic landmarks, a visible skip link, descriptive labels and visible focus states.
-- Keyboard-operable tabs, controls, drawers and dialogs; modal and drawer focus management; Escape handling; and polite toast announcements.
-- 44px interactive targets and reduced-motion handling.
-- Layouts designed and checked for 360px, 768px, 1024px and 1440px viewports.
+```json
+{ "success": true, "data": {}, "meta": {} }
+```
 
-## Running the application
+JSON errors use:
 
-Requirements: Node.js 20.9 or newer and npm.
+```json
+{ "success": false, "error": { "code": "VALIDATION_ERROR", "message": "...", "details": {} } }
+```
+
+| Method   | Endpoint                                                  | Purpose                                                         | Success |
+| -------- | --------------------------------------------------------- | --------------------------------------------------------------- | ------: |
+| `GET`    | `/api/posts?page=1&pageSize=20&search=&authorId=&feedId=` | Paginated post list and filters                                 |     200 |
+| `POST`   | `/api/posts`                                              | Create a post and feed relationships transactionally            |     201 |
+| `GET`    | `/api/posts/:id`                                          | Read one post                                                   |     200 |
+| `PATCH`  | `/api/posts/:id`                                          | Update content, author, publication date or feed relationships  |     200 |
+| `DELETE` | `/api/posts/:id`                                          | Delete a post and cascade its join rows                         |     200 |
+| `GET`    | `/api/feeds`                                              | Read the fixed feed catalogue                                   |     200 |
+| `GET`    | `/api/users`                                              | Read demo authors                                               |     200 |
+| `GET`    | `/health`                                                 | API and database health                                         | 200/503 |
+| `GET`    | `/count`                                                  | Successful RSS request count                                    |     200 |
+| `GET`    | `/stats`                                                  | Post/feed totals, latest post, per-feed totals and RSS requests |     200 |
+| `GET`    | `/rss`                                                    | Five newest unique posts as RSS 2.0 XML                         |     200 |
+| `GET`    | `/rss/:channelCode`                                       | All posts for one channel as RSS 2.0 XML                        | 200/404 |
+
+The fixed feed catalogue is intentionally read-only. Posts provide the assessment's complete create, read, update and delete workflow.
+
+Example create payload:
+
+```json
+{
+  "title": "Industry placement applications open",
+  "body": "Applications close Friday.",
+  "authorId": "administrator",
+  "feedIds": ["internships", "csit-news"],
+  "publishedAt": "2026-08-10T01:00:00.000Z",
+  "imageUrl": null,
+  "externalLink": "https://example.com/apply"
+}
+```
+
+Invalid JSON, malformed pagination, empty content, unknown authors, unknown feeds, invalid dates and non-HTTP URLs return predictable 400 responses. Missing posts or channels return 404. CORS is deliberately non-credentialed and permissive for this authentication-free assessment demonstration.
+
+Compatibility aliases `/api/topics` and `/api/rss/topics/:channelCode` remain temporarily available for older assessment links, but all current applications use `/api/feeds` and `/rss/:channelCode`.
+
+The machine-readable OpenAPI contract is in [`docs/openapi.yaml`](docs/openapi.yaml).
+
+## RSS behaviour
+
+- `http://localhost:4000/rss` returns exactly the five newest posts.
+- `http://localhost:4000/rss/FRONTIERLLMS` returns only that channel.
+- Successful combined and channel RSS responses increment the persistent `/count` value.
+- RSS titles, descriptions, authors, dates, GUIDs, links and optional images are XML-escaped consistently.
+- Each item links to the readable frontend page at `http://localhost:3000/posts/:id`.
+- The standalone client loads a selected channel automatically and refreshes it every 15 seconds, with a spinner and countdown.
+
+## Run with Docker
+
+From a fresh clone:
+
+```bash
+docker compose up --build -d
+docker compose ps
+```
+
+Expected URLs:
+
+- Frontend: http://localhost:3000
+- API: http://localhost:4000
+- RSS Client: http://localhost:5000
+- Health: http://localhost:4000/health
+- Request count: http://localhost:4000/count
+- Statistics: http://localhost:4000/stats
+
+To deliberately remove all demonstration data and test a fresh migration/seed:
+
+```bash
+docker compose down -v
+docker compose up --build -d
+```
+
+Do not use `down -v` for a normal restart. This preserves the named SQLite volume:
+
+```bash
+docker compose restart api
+```
+
+On Windows, the repeatable smoke test checks all three ports, health, RSS XML and persistence across an API restart:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/smoke-test.ps1
+```
+
+## Local development and quality checks
 
 ```bash
 npm ci
-npm run dev
+npm ci --prefix api
+npm ci --prefix frontend
+npm ci --prefix rss-client
+npm run verify
 ```
 
-Open `http://localhost:3000`.
+`npm run verify` checks formatting, lints all three applications, runs isolated API/RSS tests and creates all three production builds. Tests use a temporary SQLite database and never modify Docker demonstration data. GitHub Actions runs the same quality gates on feature branches and pull requests.
 
-For production validation:
+Start applications without Docker in separate terminals:
 
 ```bash
-npm run lint
-npm run build
-npm start
+npm run dev:api
+npm run dev:frontend
+npm run dev:rss-client
 ```
 
-## Architectural design and decisions
-
-### Technology and rendering model
-
-The application uses Next.js App Router, React 19, TypeScript and Tailwind CSS. Pages and layout structure are rendered with the App Router; only the interactive workspaces and state providers are client components. This keeps the application structure simple while allowing immediate, responsive browser interactions.
-
-### State boundaries
-
-State is separated by responsibility rather than being placed in a single global store:
-
-| Boundary | Responsibility | Reason for the boundary |
-|---|---|---|
-| `PreferencesContext` | Theme preference, RSS subscriptions and channel layout | Keeps user-interface preferences independent from content. |
-| `SessionContext` | Current mock user and selector visibility | Makes the assessment's simulated identity flow explicit and non-persistent. |
-| `ContentContext` | Internal posts and subject channels | Gives all content creation, deletion and reset actions one local source of truth. |
-| `PublishingContext` | Confirmation, simulated publishing progress and toast notifications | Reuses the same feedback workflow for internal and external publication. |
-
-Reusable components provide the shell, navigation, page headers, cards, badges, buttons, icons, modal focus management, channel multi-select and publishing composer. This avoids duplicate interaction logic and keeps page components focused on their workspace.
-
-### Data design and persistence boundary
-
-`src/data/mockData.ts` contains the deterministic seed content: classifications, channels, feed definitions, synthetic external articles and seed internal posts. The 50 external titles and summaries are original fictional content. They are not downloaded, parsed or cached from real RSS feeds.
-
-There is no database. Content and preferences that the user changes are stored in `localStorage` on the current browser and device:
-
-| Key | Stored value |
-|---|---|
-| `lt-content-hub.preferences.v1` | Theme, subscribed feed IDs and channel-layout preference |
-| `lt-content-hub.channels.v1` | Added or deleted subject-channel state |
-| `lt-content-hub.internal-posts.v1` | Created or deleted internal-post state |
-
-Malformed stored values safely fall back to the seeded state. This browser-only storage was chosen to demonstrate the full interface and state lifecycle without implying a server, shared data, access controls or durable institutional record. Clearing site data or using **Reset workspace** returns the app to its default local state.
-
-### Theme implementation
-
-An early, non-React bootstrap script reads the saved preference and applies the resolved theme to the document before React becomes interactive. Once hydration has completed, the application enables the two-second transition used for deliberate theme changes. This decision prevents the page from briefly rendering in the wrong colour scheme or fading on startup.
-
-### Future service boundary
-
-The publishing delay and workflow visualisation deliberately mark the boundary where a later system could add authenticated users, an API, persistent database, RSS ingestion and generation, a queue or notification service, and LMS integration. The current component and context boundaries make those services replaceable without changing the core user journey.
-
-## Project structure
-
-```text
-src/
-  app/                  App Router pages, layout and global styles
-  components/           Shared UI, layout, publishing, posts, channels and settings components
-  config/app.ts         Application, student and displayed Git-history metadata
-  context/              Preference, session, content and publishing state boundaries
-  data/mockData.ts      Deterministic seed data and synthetic RSS catalogue
-  types/                Shared TypeScript domain types
-```
-
-## Development history
-
-The repository history records the feature work chronologically. The Settings Git tile mirrors the project commit metadata for in-app review; the repository remains the source of truth.
+Migrations and the idempotent seed can also be run explicitly:
 
 ```bash
-git log --graph --oneline --decorate --all
+npm --prefix api run db:migrate
+npm --prefix api run db:seed
 ```
 
-## Student details
+## EC2 port override
 
-The configured student details are:
+Local development intentionally keeps `3000:3000`, `4000:4000` and `5000:5000`. The course diagram is represented by a separate override:
 
-- Name: Andy Rea
-- Student number: 22809185
-
-They are centralised in `src/config/app.ts`.
-
-## Demonstration video
-
-Record a 3–8 minute MP4 (target 5–6 minutes) demonstrating the student ID, face, voice, application, responsive navigation, themes, publishing flow and code. Place it at:
-
-```text
-public/video/assessment-demo.mp4
+```bash
+cp ec2.env.example ec2.env
+docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.override.yml up --build -d
 ```
 
-See `docs/VIDEO_SPEAKING_NOTES.md` for the guided run-through.
+| Service    | Container port |      EC2 host port |
+| ---------- | -------------: | -----------------: |
+| Frontend   |           3000 |                 80 |
+| API        |           3000 |               4080 |
+| RSS Client |           5000 | private by default |
 
-## Submission checklist
+Allow inbound TCP 80 and 4080 in the EC2 security group. Port 5000 is optional. The browser-facing frontend uses the public API URL from `ec2.env`, while the RSS Client proxy reaches `http://api:3000` on Docker's private network.
 
-1. Confirm the student name and number are correct.
-2. Add and test the final 3–8 minute MP4.
-3. Run `npm ci`, `npm run lint` and `npm run build`.
-4. Review keyboard operation at the four target widths.
-5. Review the repository Git graph.
-6. Exclude `node_modules`, `.next` and local environment files from the zip.
-7. Submit through Moodle/Turnitin and confirm a similarity score is generated.
+## Submission workflow
 
-Additional materials:
-
-- `docs/VIDEO_SPEAKING_NOTES.md`
-- `docs/WRITTEN_JUSTIFICATION.md`
-- `docs/SUBMISSION_CHECKLIST.md`
+Assessment work is developed on feature branches and reviewed by automated checks before merging to `main`. The final submission is tagged `assessment-2-final`. Generated dependencies, Next.js output, environment secrets, local SQLite files and video files are excluded from Git.

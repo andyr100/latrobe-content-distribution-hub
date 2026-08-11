@@ -1,0 +1,210 @@
+openapi: 3.1.0
+info:
+  title: La Trobe Content Distribution API
+  version: 2.0.0
+  description: REST and operational contract for Assessment 2. RSS routes return XML and are documented separately in the README.
+servers:
+  - url: http://localhost:4000
+paths:
+  /api/posts:
+    get:
+      summary: List and filter posts
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - {
+            name: pageSize,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100, default: 50 },
+          }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: authorId, in: query, schema: { type: string } }
+        - { name: feedId, in: query, schema: { type: string } }
+      responses:
+        "200":
+          {
+            description: Paginated posts,
+            content:
+              { application/json: { schema: { $ref: "#/components/schemas/PostListEnvelope" } } },
+          }
+        "400": { $ref: "#/components/responses/ValidationError" }
+    post:
+      summary: Create a post and its feed relationships
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PostInput" }
+      responses:
+        "201":
+          {
+            description: Created post,
+            content:
+              { application/json: { schema: { $ref: "#/components/schemas/PostEnvelope" } } },
+          }
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /api/posts/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    get:
+      summary: Read one post
+      responses:
+        "200":
+          {
+            description: Post,
+            content:
+              { application/json: { schema: { $ref: "#/components/schemas/PostEnvelope" } } },
+          }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      summary: Update a post and optionally replace feed relationships
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PostPatch" }
+      responses:
+        "200":
+          {
+            description: Updated post,
+            content:
+              { application/json: { schema: { $ref: "#/components/schemas/PostEnvelope" } } },
+          }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      summary: Delete a post and cascade its join rows
+      responses:
+        "200": { description: Deleted post identifier }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/feeds:
+    get:
+      summary: Read the fixed feed catalogue
+      responses:
+        "200": { description: Feed list }
+  /health:
+    get:
+      summary: Check API and database health
+      responses:
+        "200": { description: Connected }
+        "503": { description: Database unavailable }
+  /count:
+    get:
+      summary: Read the persistent successful RSS request count
+      responses:
+        "200": { description: Request count }
+  /stats:
+    get:
+      summary: Read database-driven publishing and RSS statistics
+      responses:
+        "200": { description: Operational statistics }
+  /rss:
+    get:
+      summary: Read the five newest posts as RSS 2.0
+      responses:
+        "200": { description: Combined RSS feed, content: { application/rss+xml: {} } }
+  /rss/{channelCode}:
+    get:
+      summary: Read one channel as RSS 2.0
+      parameters:
+        - {
+            name: channelCode,
+            in: path,
+            required: true,
+            schema: { type: string, example: FRONTIERLLMS },
+          }
+      responses:
+        "200": { description: Channel RSS feed, content: { application/rss+xml: {} } }
+        "404": { $ref: "#/components/responses/NotFound" }
+components:
+  schemas:
+    Feed:
+      type: object
+      required: [id, code, title, description, slug]
+      properties:
+        id: { type: string, example: frontier-llms }
+        code: { type: string, example: FRONTIERLLMS }
+        title: { type: string, example: Frontier LLMs }
+        description: { type: string }
+        slug: { type: string, example: frontier-llms }
+    Post:
+      type: object
+      required: [id, title, body, authorId, publishedAt, author, feeds]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        body: { type: string }
+        authorId: { type: string }
+        publishedAt: { type: string, format: date-time }
+        imageUrl: { type: [string, "null"], format: uri }
+        externalLink: { type: [string, "null"], format: uri }
+        author: { type: object }
+        feeds: { type: array, items: { $ref: "#/components/schemas/Feed" } }
+    PostInput:
+      type: object
+      required: [title, body, authorId, feedIds]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        body: { type: string, minLength: 1, maxLength: 5000 }
+        authorId: { type: string }
+        feedIds: { type: array, minItems: 1, uniqueItems: true, items: { type: string } }
+        publishedAt: { type: string, format: date-time }
+        imageUrl: { type: [string, "null"], format: uri }
+        externalLink: { type: [string, "null"], format: uri }
+    PostPatch:
+      type: object
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        body: { type: string, minLength: 1, maxLength: 5000 }
+        authorId: { type: string }
+        feedIds: { type: array, minItems: 1, uniqueItems: true, items: { type: string } }
+        publishedAt: { type: string, format: date-time }
+        imageUrl: { type: [string, "null"], format: uri }
+        externalLink: { type: [string, "null"], format: uri }
+    SuccessEnvelope:
+      type: object
+      required: [success, data]
+      properties:
+        success: { const: true }
+        data: {}
+        meta: { type: object }
+    PostEnvelope:
+      allOf:
+        - { $ref: "#/components/schemas/SuccessEnvelope" }
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/Post" }
+    PostListEnvelope:
+      allOf:
+        - { $ref: "#/components/schemas/SuccessEnvelope" }
+        - type: object
+          properties:
+            data: { type: array, items: { $ref: "#/components/schemas/Post" } }
+            meta:
+              type: object
+              required: [count, total, page, pageSize, totalPages]
+              properties:
+                count: { type: integer }
+                total: { type: integer }
+                page: { type: integer }
+                pageSize: { type: integer }
+                totalPages: { type: integer }
+    ErrorEnvelope:
+      type: object
+      required: [success, error]
+      properties:
+        success: { const: false }
+        error:
+          type: object
+          required: [code, message, details]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: object }
+  responses:
+    ValidationError:
+      description: Input validation failed
+      content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } }
+    NotFound:
+      description: Record was not found
+      content: { application/json: { schema: { $ref: "#/components/schemas/ErrorEnvelope" } } }

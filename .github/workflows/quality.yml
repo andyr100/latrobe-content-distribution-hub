@@ -1,0 +1,38 @@
+name: Assessment 2 quality checks
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.5
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            api/package-lock.json
+            frontend/package-lock.json
+            rss-client/package-lock.json
+      - name: Install tooling
+        run: npm ci
+      - name: Install application dependencies
+        run: |
+          npm ci --prefix api
+          npm ci --prefix frontend
+          npm ci --prefix rss-client
+      - name: Verify formatting
+        run: npm run format:check
+      - name: Lint all applications
+        run: npm run lint
+      - name: Run isolated API and RSS tests
+        run: npm test
+      - name: Build all applications
+        run: npm run build
