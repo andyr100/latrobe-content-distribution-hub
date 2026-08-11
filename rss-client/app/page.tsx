@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import type { ApiEnvelope, FeedDto } from "@latrobe/api-contract";
 
-type Channel = { id: string; code: string; title: string };
+type Channel = Pick<FeedDto, "id" | "code" | "title">;
 type FeedItem = {
   title: string;
   description: string;
@@ -28,10 +29,10 @@ export default function RssClientPage() {
 
   const refreshCount = useCallback(async () => {
     const response = await fetch("/api/count");
-    if (response.ok)
-      setRequestCount(
-        ((await response.json()) as { data: { requestCount: number } }).data.requestCount,
-      );
+    if (response.ok) {
+      const payload = (await response.json()) as ApiEnvelope<{ requestCount: number }>;
+      if (payload.success) setRequestCount(payload.data.requestCount);
+    }
   }, []);
 
   const loadChannels = useCallback(async () => {
@@ -40,7 +41,8 @@ export default function RssClientPage() {
     try {
       const response = await fetch("/api/channels");
       if (!response.ok) throw new Error("The API is unavailable");
-      const payload = (await response.json()) as { data: Channel[] };
+      const payload = (await response.json()) as ApiEnvelope<Channel[]>;
+      if (!payload.success) throw new Error(payload.error.message);
       setChannels(payload.data);
       setSelectedCode((current) => current || payload.data[0]?.code || "");
       await refreshCount();

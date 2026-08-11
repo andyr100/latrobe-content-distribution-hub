@@ -22,6 +22,7 @@ const history = git(["log", "-12", "--date=short", "--pretty=format:%h%x1f%ad%x1
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  transpilePackages: ["@latrobe/api-contract"],
   turbopack: { root: process.cwd() },
   env: {
     NEXT_PUBLIC_GIT_BRANCH:

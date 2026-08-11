@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { ApiFailure, ApiSuccess } from "@latrobe/api-contract";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,8 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-export function ok(data: unknown, status = 200, meta?: Record<string, unknown>) {
-  return NextResponse.json(
+export function ok<T>(data: T, status = 200, meta?: Record<string, unknown>) {
+  return NextResponse.json<ApiSuccess<T>>(
     { success: true, data, ...(meta ? { meta } : {}) },
     { status, headers: corsHeaders },
   );
@@ -19,7 +20,7 @@ export function failure(
   message: string,
   details: Record<string, unknown> = {},
 ) {
-  return NextResponse.json(
+  return NextResponse.json<ApiFailure>(
     { success: false, error: { code, message, details } },
     { status, headers: corsHeaders },
   );

@@ -1,5 +1,6 @@
 FROM node:20.19.5-bookworm-slim AS dependencies
 WORKDIR /app
+COPY --from=contracts . /shared
 COPY package.json package-lock.json ./
 RUN npm ci
 
@@ -11,6 +12,7 @@ ARG GIT_BRANCH=docker-build
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ENV GIT_COMMIT_SHA=$GIT_COMMIT_SHA GIT_BRANCH=$GIT_BRANCH
 COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=contracts . /shared
 COPY . .
 RUN npm run build
 
