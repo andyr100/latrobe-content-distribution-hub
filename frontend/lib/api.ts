@@ -1,4 +1,17 @@
-import type { ApiEnvelope, FeedDto, PostDto } from "@latrobe/api-contract";
+import type {
+  AlertDto,
+  ApiEnvelope,
+  FeedDto,
+  FeedStatusDto,
+  HealthDto,
+  MetricRangeDto,
+  MetricSummaryDto,
+  PostDto,
+  RecentRequestDto,
+  RequestActivityDto,
+  RequestsByClientDto,
+  RequestsByFeedDto,
+} from "@latrobe/api-contract";
 import type { Channel, DashboardStats, InternalPost, MockUser } from "@/types";
 
 export const API_BASE_URL = (
@@ -86,3 +99,70 @@ export async function updatePost(id: string, input: Partial<PostInput>) {
 export async function removePost(id: string) {
   await apiRequest<{ id: number }>(`/api/posts/${id}`, { method: "DELETE" });
 }
+
+function metricQuery(range: MetricRangeDto, extras: Record<string, string> = {}) {
+  return new URLSearchParams({ range, ...extras }).toString();
+}
+
+export async function getHealth() {
+  return apiRequest<HealthDto>("/health");
+}
+
+export async function getMetricSummary(range: MetricRangeDto) {
+  return apiRequest<MetricSummaryDto>(`/api/metrics/summary?${metricQuery(range)}`);
+}
+
+export async function getRequestsByFeed(range: MetricRangeDto, limit = 20) {
+  return apiRequest<RequestsByFeedDto[]>(
+    `/api/metrics/requests-by-feed?${metricQuery(range, { limit: String(limit) })}`,
+  );
+}
+
+export async function getRequestsByClient(range: MetricRangeDto, limit = 20) {
+  return apiRequest<RequestsByClientDto[]>(
+    `/api/metrics/requests-by-client?${metricQuery(range, { limit: String(limit) })}`,
+  );
+}
+
+export async function getRequestActivity(range: MetricRangeDto) {
+  return apiRequest<RequestActivityDto[]>(`/api/metrics/requests-over-time?${metricQuery(range)}`);
+}
+
+export async function getRecentRequests(range: MetricRangeDto, limit = 20) {
+  return apiRequest<RecentRequestDto[]>(
+    `/api/metrics/recent?${metricQuery(range, { limit: String(limit) })}`,
+  );
+}
+
+export async function getFeedStatuses() {
+  return apiRequest<FeedStatusDto[]>("/api/feed-status");
+}
+
+export async function getAlerts(resolved: "true" | "false" | "all" = "false") {
+  return apiRequest<AlertDto[]>(`/api/alerts?resolved=${resolved}`);
+}
+
+export async function setAlertResolved(id: number, resolved: boolean) {
+  return apiRequest<AlertDto>(`/api/alerts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ resolved }),
+  });
+}
+
+export async function getOperationsSnapshot(range: MetricRangeDto, limit = 8) {
+  const [health, summary, byFeed, byClient, activity, statuses, alerts, recent] = await Promise.all(
+    [
+      getHealth(),
+      getMetricSummary(range),
+      getRequestsByFeed(range, limit),
+      getRequestsByClient(range, limit),
+      getRequestActivity(range),
+      getFeedStatuses(),
+      getAlerts("false"),
+      getRecentRequests(range, limit),
+    ],
+  );
+  return { health, summary, byFeed, byClient, activity, statuses, alerts, recent };
+}
+
+export type OperationsSnapshot = Awaited<ReturnType<typeof getOperationsSnapshot>>;

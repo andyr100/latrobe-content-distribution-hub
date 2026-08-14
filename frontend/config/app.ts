@@ -10,8 +10,8 @@ function gitCommits(): GitCommit[] {
 
 export const appConfig = {
   name: "La Trobe Content Distribution Hub",
-  assessment: "Cloud Based Applications — Assessment 2",
-  version: "2.0.0",
+  assessment: "Cloud Based Applications — Assessment 3",
+  version: "3.0.0",
   student: { name: "Andy Rea", number: "22809185" },
   git: {
     branch: process.env.NEXT_PUBLIC_GIT_BRANCH ?? "unknown",
