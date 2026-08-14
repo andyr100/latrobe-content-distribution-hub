@@ -5,6 +5,7 @@ import {
   FeedStatusEvent,
   RequestCounter,
   RequestLog,
+  RssUser,
   type AlertSeverity,
   type FeedStatus,
 } from "@/models";
@@ -20,6 +21,7 @@ export function requestIdentity(request: Request) {
     clientId: clientId || "anonymous",
     source: request.headers.get("x-client-source")?.trim().slice(0, 50) || "direct",
     userAgent: request.headers.get("user-agent")?.trim().slice(0, 500) || null,
+    requestedRssUserId: request.headers.get("x-rss-user-id")?.trim().slice(0, 100) || null,
   };
 }
 
@@ -76,10 +78,14 @@ export async function recordRssObservation(observation: Observation) {
   const success = observation.statusCode >= 200 && observation.statusCode < 400;
   const requestedAt = observation.requestedAt ?? new Date();
   const status = statusFor(observation);
+  const rssUserId = observation.requestedRssUserId
+    ? ((await RssUser.findByPk(observation.requestedRssUserId))?.id ?? null)
+    : null;
   await sequelize.transaction(async (transaction) => {
     await RequestLog.create(
       {
         clientId: observation.clientId,
+        rssUserId,
         feedId: observation.feedId,
         endpoint: observation.endpoint,
         method: "GET",

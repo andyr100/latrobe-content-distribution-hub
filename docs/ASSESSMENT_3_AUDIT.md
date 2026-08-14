@@ -18,7 +18,7 @@ Baseline: `main` at `347dbdd` (`assessment-2-final`)
 - Instrument successful, empty, missing, and failed RSS requests with client ID, endpoint, status, duration, source, user agent, feed association, and timestamp.
 - Give the standalone RSS client a stable local-storage client ID and forward it through its server-side proxy.
 - Add database-aggregated summary, per-feed, per-client, time-series, feed-status, alert, and recent-activity APIs with bounded filters.
-- Extend the main dashboard with operational KPIs and accessible visual summaries, and add a focused Reports navigation destination.
+- Extend the main dashboard with operational KPIs and accessible visual summaries, and add a focused Hub Intelligence navigation destination.
 - Add deterministic Assessment 3 simulation and metrics-only reset scripts without touching users, posts, feeds, or their relationships.
 - Add Playwright server CRUD and browser RSS-client use cases, a parameterised JMeter plan and staged runner guidance, and reproducible Lighthouse documentation/evidence locations.
 - Update Docker, CI, OpenAPI, README, assessment labels, and video talking points for Assessment 3. Add OpenTelemetry only if it remains compatible and proportionate after the assessed features are complete.
@@ -55,7 +55,7 @@ Baseline: `main` at `347dbdd` (`assessment-2-final`)
 1. Operational models, migration, compatibility counter, simulation, and reset tooling.
 2. RSS request instrumentation and stable client identity.
 3. Aggregated metrics, feed-status, alert, and reporting APIs with tests.
-4. Dashboard and Reports UI, navigation, accessible summaries, and live refresh.
+4. Dashboard and Hub Intelligence UI, navigation, accessible summaries, and live refresh.
 5. Playwright, JMeter, Lighthouse workflow, and test documentation.
 6. Optional compatible OpenTelemetry Compose profile, then full Docker and quality verification.
 7. README, OpenAPI, video guidance, and final evidence checklist.

@@ -8,6 +8,11 @@ const tables = [
     description: "Publishing users and their roles.",
   },
   {
+    id: "rss-users",
+    label: "RssUsers",
+    description: "Mock LMS student viewers used by the standalone RSS Client.",
+  },
+  {
     id: "posts",
     label: "Posts",
     description: "Posts created in the Distribution Hub.",

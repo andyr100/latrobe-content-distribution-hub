@@ -37,5 +37,15 @@ export default defineConfig({
         NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED: "false",
       },
     },
+    {
+      command: "npm --prefix frontend run dev",
+      url: "http://localhost:3000",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: {
+        ...process.env,
+        NEXT_PUBLIC_API_BASE_URL: "http://localhost:4000",
+      },
+    },
   ],
 });

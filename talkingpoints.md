@@ -19,9 +19,9 @@ Target: about seven minutes. Record only evidence that was actually executed.
 - Open the database inspector and show the corresponding request record, status event, duration, result, and timestamp.
 - Restart the API container and show that the values remain.
 
-## 2:30-3:15 - Reports and alerts
+## 2:30-3:15 - Hub Intelligence and alerts
 
-- Open Reports, change the time range, and compare per-feed and per-client tables.
+- Open Hub Intelligence, apply time, author, RSS student, Channel, result and source filters, then compare charts with paginated evidence.
 - Show accessible table equivalents for charts.
 - Resolve the deterministic demonstration warning and show its state update.
 

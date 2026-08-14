@@ -4,7 +4,7 @@ import type { ApiFailure, ApiSuccess } from "@latrobe/api-contract";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-Client-Id, X-Client-Source",
+  "Access-Control-Allow-Headers": "Content-Type, X-Client-Id, X-Client-Source, X-Rss-User-Id",
 };
 
 export function ok<T>(data: T, status = 200, meta?: Record<string, unknown>) {

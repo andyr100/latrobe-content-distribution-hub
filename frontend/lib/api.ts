@@ -9,6 +9,9 @@ import type {
   PostDto,
   RecentRequestDto,
   RequestActivityDto,
+  InsightFiltersDto,
+  InsightLogDto,
+  InsightLogMeta,
   RequestsByClientDto,
   RequestsByFeedDto,
 } from "@latrobe/api-contract";
@@ -166,3 +169,84 @@ export async function getOperationsSnapshot(range: MetricRangeDto, limit = 8) {
 }
 
 export type OperationsSnapshot = Awaited<ReturnType<typeof getOperationsSnapshot>>;
+
+export type HubOverview = {
+  range: MetricRangeDto;
+  generatedAt: string;
+  summary: {
+    totalRequests: number;
+    successfulRequests: number;
+    failedRequests: number;
+    averageLatencyMs: number;
+    activeClients: number;
+    activeRssUsers: number;
+    successRate: number;
+    p95LatencyMs: number;
+    publishingAuthors: number;
+    publishedPosts: number;
+    healthyFeeds: number;
+    totalFeeds: number;
+    unresolvedAlerts: number;
+  };
+  requestActivity: Array<{
+    bucket: string;
+    totalRequests: number;
+    successfulRequests: number;
+    failedRequests: number;
+    averageLatencyMs: number;
+  }>;
+  postActivity: Array<{ bucket: string; totalPosts: number; activeAuthors: number }>;
+  feedDemand: Array<{ code: string; title: string; value: number }>;
+  clientActivity: Array<{ bucket: string; activeClients: number }>;
+  rssUserActivity: Array<{ bucket: string; activeRssUsers: number }>;
+  sourceDistribution: Array<{ label: string; value: number }>;
+  postChannels: Array<{ label: string; value: number }>;
+  topAuthors: Array<{ label: string; value: number }>;
+  publishingUsers: Array<{ bucket: string; totalUsers: number }>;
+  healthTimeline: Array<{ bucket: string; status: string; value: number }>;
+  statuses: FeedStatusDto[];
+};
+
+export type HubFilterOptions = {
+  authors: Array<{ id: string; name: string; role: string }>;
+  rssUsers: Array<{ id: string; name: string; role: string }>;
+  feeds: Array<{ id: string; code: string; title: string }>;
+  sources: string[];
+  ranges: MetricRangeDto[];
+};
+
+function insightQuery(filters: InsightFiltersDto & { page?: number; pageSize?: number }) {
+  const values = Object.entries(filters)
+    .filter(([, value]) => value !== undefined && value !== "")
+    .map(([key, value]) => [key, String(value)]);
+  return new URLSearchParams(values).toString();
+}
+
+export function getHubFilterOptions() {
+  return apiRequest<HubFilterOptions>("/api/insights/filter-options");
+}
+export function getHubOverview(filters: InsightFiltersDto) {
+  return apiRequest<HubOverview>(`/api/insights/overview?${insightQuery(filters)}`);
+}
+export function getHubRequestLogs(
+  filters: InsightFiltersDto,
+  page: number,
+  pageSize: 20 | 100 | 500 | 1000,
+) {
+  return apiRequest<InsightLogDto[]>(
+    `/api/insights/request-logs?${insightQuery({ ...filters, page, pageSize })}`,
+  ).then((data) => data);
+}
+export async function getHubRequestLogPage(
+  filters: InsightFiltersDto,
+  page: number,
+  pageSize: 20 | 100 | 500 | 1000,
+) {
+  const response = await fetch(
+    `${API_BASE_URL}/api/insights/request-logs?${insightQuery({ ...filters, page, pageSize })}`,
+  );
+  const payload = (await response.json()) as ApiEnvelope<InsightLogDto[], InsightLogMeta>;
+  if (!response.ok || !payload.success)
+    throw new Error("error" in payload ? payload.error.message : "Unable to load request logs");
+  return { rows: payload.data, meta: payload.meta! };
+}

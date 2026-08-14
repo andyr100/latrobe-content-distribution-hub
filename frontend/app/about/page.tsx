@@ -66,9 +66,9 @@ export default function AboutPage() {
               <h3 className="font-bold">Assessment boundary</h3>
             </div>
             <p className="muted mt-3 text-sm leading-6">
-              Assessment 3 adds persisted request analytics, feed status history, alerts, reports,
-              and repeatable test evidence. User selection remains mock authentication and there is
-              no production LMS connection.
+              Assessment 3 adds persisted request analytics, separate RSS student identities, feed
+              status history, alerts, Hub Intelligence, and repeatable test evidence. User selection
+              remains mock authentication and there is no production LMS connection.
             </p>
           </div>
         </GlassCard>

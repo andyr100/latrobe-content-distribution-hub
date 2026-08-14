@@ -8,6 +8,7 @@ import {
   PostFeed,
   RequestCounter,
   RequestLog,
+  RssUser,
   User,
 } from "@/models";
 import { QueryTypes, type Model, type ModelStatic } from "sequelize";
@@ -18,6 +19,7 @@ const tableModels = {
   feeds: Feed,
   "post-feeds": PostFeed,
   "request-counters": RequestCounter,
+  "rss-users": RssUser,
   "request-logs": RequestLog,
   "feed-status-events": FeedStatusEvent,
   alerts: Alert,

@@ -9,6 +9,7 @@ tags:
   - { name: Publishing }
   - { name: RSS }
   - { name: Operations }
+  - { name: Hub Intelligence }
 paths:
   /api/posts:
     get:
@@ -73,6 +74,52 @@ paths:
       summary: Read authors
       responses:
         "200": { $ref: "#/components/responses/Success" }
+  /api/rss-users:
+    get:
+      tags: [Hub Intelligence]
+      summary: Read the six mock LMS student viewers
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+  /api/insights/filter-options:
+    get:
+      tags: [Hub Intelligence]
+      summary: Read author, RSS student, Channel, source and range slicer options
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+  /api/insights/overview:
+    get:
+      tags: [Hub Intelligence]
+      summary: Read filter-aware Hub Intelligence KPI and chart data
+      parameters:
+        - { $ref: "#/components/parameters/Range" }
+        - { name: authorId, in: query, schema: { type: string } }
+        - { name: rssUserId, in: query, schema: { type: string } }
+        - { name: feedId, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [success, failure] } }
+        - { name: source, in: query, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /api/insights/request-logs:
+    get:
+      tags: [Hub Intelligence]
+      summary: Read paginated, filter-aware request-log evidence
+      parameters:
+        - { $ref: "#/components/parameters/Range" }
+        - { name: authorId, in: query, schema: { type: string } }
+        - { name: rssUserId, in: query, schema: { type: string } }
+        - { name: feedId, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [success, failure] } }
+        - { name: source, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - {
+            name: pageSize,
+            in: query,
+            schema: { type: integer, enum: [20, 100, 500, 1000], default: 20 },
+          }
+      responses:
+        "200": { $ref: "#/components/responses/Success" }
+        "400": { $ref: "#/components/responses/ValidationError" }
   /api/metrics/summary:
     get:
       tags: [Operations]

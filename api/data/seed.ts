@@ -1,5 +1,5 @@
 import type { Transaction } from "sequelize";
-import { Feed, Post, PostFeed, RequestCounter, User } from "@/models";
+import { Feed, Post, PostFeed, RequestCounter, RssUser, User } from "@/models";
 
 const users = [
   {
@@ -26,6 +26,15 @@ const users = [
     email: "emily.taylor@latrobe.example",
     role: "Lecturer",
   },
+] as const;
+
+const rssUsers = [
+  ["ava-nguyen", "Ava Nguyen", "ava.nguyen@student.latrobe.example"],
+  ["liam-wilson", "Liam Wilson", "liam.wilson@student.latrobe.example"],
+  ["mia-patel", "Mia Patel", "mia.patel@student.latrobe.example"],
+  ["noah-brown", "Noah Brown", "noah.brown@student.latrobe.example"],
+  ["olivia-kim", "Olivia Kim", "olivia.kim@student.latrobe.example"],
+  ["ethan-jones", "Ethan Jones", "ethan.jones@student.latrobe.example"],
 ] as const;
 
 const feeds = [
@@ -203,6 +212,12 @@ const posts = [
 export async function seedDatabase(transaction: Transaction) {
   for (const user of users)
     await User.findOrCreate({ where: { id: user.id }, defaults: { ...user }, transaction });
+  for (const [id, name, email] of rssUsers)
+    await RssUser.findOrCreate({
+      where: { id },
+      defaults: { id, name, email, role: "Student" },
+      transaction,
+    });
   for (const [id, code, title, description] of feeds) {
     await Feed.findOrCreate({
       where: { id },

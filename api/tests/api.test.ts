@@ -28,6 +28,8 @@ let requestsByClientRoute: typeof import("../app/api/metrics/requests-by-client/
 let requestsOverTimeRoute: typeof import("../app/api/metrics/requests-over-time/route");
 let feedStatusRoute: typeof import("../app/api/feed-status/route");
 let alertsRoute: typeof import("../app/api/alerts/route");
+let insightOverviewRoute: typeof import("../app/api/insights/overview/route");
+let insightLogsRoute: typeof import("../app/api/insights/request-logs/route");
 let database: typeof import("../lib/sequelize");
 let models: typeof import("../models");
 let postService: typeof import("../services/posts");
@@ -52,6 +54,8 @@ before(async () => {
   requestsOverTimeRoute = await import("../app/api/metrics/requests-over-time/route");
   feedStatusRoute = await import("../app/api/feed-status/route");
   alertsRoute = await import("../app/api/alerts/route");
+  insightOverviewRoute = await import("../app/api/insights/overview/route");
+  insightLogsRoute = await import("../app/api/insights/request-logs/route");
   database = await import("../lib/sequelize");
   models = await import("../models");
   postService = await import("../services/posts");
@@ -65,6 +69,7 @@ after(async () => {
 
 test("fresh migration creates and seeds the explicit feed schema", async () => {
   assert.equal(await models.User.count(), 4);
+  assert.equal(await models.RssUser.count(), 6);
   assert.equal(await models.Feed.count(), 8);
   assert.equal(await models.Post.count(), 16);
   const tables = new Set(
@@ -75,6 +80,7 @@ test("fresh migration creates and seeds the explicit feed schema", async () => {
   assert(tables.has("RequestLogs"));
   assert(tables.has("FeedStatusEvents"));
   assert(tables.has("Alerts"));
+  assert(tables.has("RssUsers"));
   assert(!tables.has("Topics"));
   assert(!tables.has("PostTopics"));
   const columns = await database.sequelize.getQueryInterface().describeTable("Posts");
@@ -217,9 +223,12 @@ test("RSS output is valid, escaped, limited, channel-scoped and counted", async 
   assert.equal(new Set(guids).size, 5);
   assert(!combinedXml.includes("<title>Testing <RSS> & APIs</title>"));
 
-  const channel = await channelRssRoute.GET(new Request("http://test"), {
-    params: Promise.resolve({ channelCode: "HACKATHONS" }),
-  });
+  const channel = await channelRssRoute.GET(
+    new Request("http://test", { headers: { "X-Rss-User-Id": "ava-nguyen" } }),
+    {
+      params: Promise.resolve({ channelCode: "HACKATHONS" }),
+    },
+  );
   const channelXml = await channel.text();
   assert.equal(channel.status, 200);
   assert.match(channelXml, /Updated &lt;RSS&gt; &amp; test/);
@@ -234,6 +243,10 @@ test("RSS output is valid, escaped, limited, channel-scoped and counted", async 
   assert.equal(missing.status, 404);
   const after = await models.RequestCounter.findOne({ where: { key: "rss-client-requests" } });
   assert.equal(after!.count, before!.count + 2);
+  assert.equal(
+    (await models.RequestLog.findOne({ where: { rssUserId: "ava-nguyen" } }))?.rssUserId,
+    "ava-nguyen",
+  );
 });
 
 test("operational endpoints share the documented response contract", async () => {
@@ -305,6 +318,34 @@ test("Assessment 3 metrics aggregate persisted RSS operations", async () => {
 
   const invalid = await metricSummaryRoute.GET(
     new Request("http://test/api/metrics/summary?range=forever"),
+  );
+  assert.equal(invalid.status, 400);
+});
+
+test("Hub Intelligence aggregates filters and paginates request evidence", async () => {
+  const overview = await json<{
+    summary: { totalRequests: number; p95LatencyMs: number };
+    requestActivity: unknown[];
+  }>(
+    await insightOverviewRoute.GET(
+      new Request("http://test/api/insights/overview?range=all&rssUserId=ava-nguyen"),
+    ),
+  );
+  assert.equal(overview.success, true);
+  assert(overview.data.summary.totalRequests >= 1);
+  assert(overview.data.summary.p95LatencyMs >= 0);
+  assert(overview.data.requestActivity.length >= 1);
+  const logsResponse = await insightLogsRoute.GET(
+    new Request(
+      "http://test/api/insights/request-logs?range=all&page=1&pageSize=20&rssUserId=ava-nguyen",
+    ),
+  );
+  const logs = await json<Array<{ rssUserId: string | null }>>(logsResponse);
+  assert.equal(logsResponse.status, 200);
+  assert(logs.data.every((row) => row.rssUserId === "ava-nguyen"));
+  assert.equal(logs.meta?.pageSize, 20);
+  const invalid = await insightLogsRoute.GET(
+    new Request("http://test/api/insights/request-logs?range=all&pageSize=50"),
   );
   assert.equal(invalid.status, 400);
 });

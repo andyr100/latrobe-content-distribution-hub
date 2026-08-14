@@ -26,9 +26,9 @@ const actions: { label: string; note: string; href: string; icon: IconName }[] =
     icon: "rss",
   },
   {
-    label: "Open reports",
+    label: "Hub Intelligence",
     note: "Review RSS activity and feed health",
-    href: "/reports",
+    href: "/hubintelligence",
     icon: "pulse",
   },
 ];

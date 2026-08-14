@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
-import type { ApiEnvelope, FeedDto, UserDto } from "@latrobe/api-contract";
+import type { ApiEnvelope, FeedDto, RssUserDto } from "@latrobe/api-contract";
 
 type Channel = Pick<FeedDto, "id" | "code" | "title">;
 type FeedItem = {
@@ -23,7 +23,7 @@ function text(element: Element, selector: string) {
 
 export default function RssClientPage() {
   const [channels, setChannels] = useState<Channel[]>([]);
-  const [users, setUsers] = useState<UserDto[]>([]);
+  const [users, setUsers] = useState<RssUserDto[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedCode, setSelectedCode] = useState("");
   const [title, setTitle] = useState("");
@@ -36,6 +36,7 @@ export default function RssClientPage() {
   const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(AUTO_REFRESH_INTERVAL_SECONDS);
   const [clientId, setClientId] = useState("");
   const selectedUser = users.find((user) => user.id === selectedUserId) ?? null;
+  const activeRssUserId = selectedUser?.id ?? "";
   const activeClientId = selectedUser ? `rss-client-${selectedUser.id}-${clientId}` : "";
 
   useEffect(() => {
@@ -56,9 +57,9 @@ export default function RssClientPage() {
 
   const loadUsers = useCallback(async () => {
     try {
-      const response = await fetch("/api/users");
+      const response = await fetch("/api/rss-users");
       if (!response.ok) throw new Error("The API is unavailable");
-      const payload = (await response.json()) as ApiEnvelope<UserDto[]>;
+      const payload = (await response.json()) as ApiEnvelope<RssUserDto[]>;
       if (!payload.success) throw new Error(payload.error.message);
       setUsers(payload.data);
     } catch (caught) {
@@ -101,7 +102,7 @@ export default function RssClientPage() {
     setError(null);
     try {
       const response = await fetch(`/api/rss/${encodeURIComponent(selectedCode)}`, {
-        headers: { "X-Client-Id": activeClientId },
+        headers: { "X-Client-Id": activeClientId, "X-Rss-User-Id": activeRssUserId },
       });
       if (!response.ok)
         throw new Error(
@@ -131,7 +132,7 @@ export default function RssClientPage() {
     } finally {
       setFetching(false);
     }
-  }, [activeClientId, refreshCount, selectedCode]);
+  }, [activeClientId, activeRssUserId, refreshCount, selectedCode]);
 
   useEffect(() => {
     if (!selectedCode || !activeClientId) return;

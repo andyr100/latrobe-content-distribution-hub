@@ -2,7 +2,7 @@
 
 Assessment 3 uses two complementary observability layers:
 
-1. The assessed application layer persists RSS request logs, feed status events and alerts in SQLite and presents their aggregates in Dashboard and Reports.
+1. The assessed application layer persists RSS request logs, feed status events and alerts in SQLite and presents their aggregates in the publishing-first Dashboard and Hub Intelligence.
 2. This optional infrastructure profile sends Next.js API traces through OpenTelemetry Collector, displays traces in Jaeger, and converts span data into Prometheus metrics.
 
 Start the profile:

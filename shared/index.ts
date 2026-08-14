@@ -24,6 +24,35 @@ export type UserDto = {
   role: "Administrator" | "Lecturer";
 };
 
+export type RssUserDto = {
+  id: string;
+  name: string;
+  email: string;
+  role: "Student";
+};
+
+export type InsightFiltersDto = {
+  range: MetricRangeDto;
+  feedId?: string;
+  authorId?: string;
+  rssUserId?: string;
+  clientId?: string;
+  status?: "success" | "failure";
+  source?: string;
+};
+
+export type InsightLogDto = RecentRequestDto & {
+  rssUserId: string | null;
+  rssUserName: string | null;
+};
+
+export type InsightLogMeta = {
+  total: number;
+  page: number;
+  pageSize: 20 | 100 | 500 | 1000;
+  totalPages: number;
+};
+
 export type FeedDto = {
   id: string;
   code: string;

@@ -7,11 +7,12 @@ import { initialiseUser, User } from "./User";
 import { Alert, initialiseAlert } from "./Alert";
 import { FeedStatusEvent, initialiseFeedStatusEvent } from "./FeedStatusEvent";
 import { initialiseRequestLog, RequestLog } from "./RequestLog";
+import { initialiseRssUser, RssUser } from "./RssUser";
 
 export type { AlertSeverity } from "./Alert";
 export type { FeedStatus } from "./FeedStatusEvent";
 
-export { Alert, Feed, FeedStatusEvent, Post, PostFeed, RequestCounter, RequestLog, User };
+export { Alert, Feed, FeedStatusEvent, Post, PostFeed, RequestCounter, RequestLog, RssUser, User };
 
 let modelsInitialised = false;
 
@@ -24,6 +25,7 @@ export function initialiseModels(sequelize: Sequelize) {
   initialisePostFeed(sequelize);
   initialiseRequestCounter(sequelize);
   initialiseRequestLog(sequelize);
+  initialiseRssUser(sequelize);
   initialiseFeedStatusEvent(sequelize);
   initialiseAlert(sequelize);
 
@@ -53,6 +55,8 @@ export function initialiseModels(sequelize: Sequelize) {
   });
   Feed.hasMany(RequestLog, { foreignKey: "feedId", as: "requestLogs", onDelete: "SET NULL" });
   RequestLog.belongsTo(Feed, { foreignKey: "feedId", as: "feed", onDelete: "SET NULL" });
+  RssUser.hasMany(RequestLog, { foreignKey: "rssUserId", as: "requestLogs", onDelete: "SET NULL" });
+  RequestLog.belongsTo(RssUser, { foreignKey: "rssUserId", as: "rssUser", onDelete: "SET NULL" });
   Feed.hasMany(FeedStatusEvent, {
     foreignKey: "feedId",
     as: "statusEvents",

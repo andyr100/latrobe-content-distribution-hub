@@ -9,7 +9,7 @@ const items: { href: string; label: string; icon: IconName }[] = [
   { href: "/", label: "Dashboard", icon: "dashboard" },
   { href: "/posts", label: "Posts", icon: "posts" },
   { href: "/channels", label: "Channels", icon: "channels" },
-  { href: "/reports", label: "Reports", icon: "report" },
+  { href: "/hubintelligence", label: "Hub Intelligence", icon: "report" },
   { href: "/workflow", label: "Workflow", icon: "workflow" },
   { href: "/database", label: "Database", icon: "database" },
   { href: "/about", label: "About", icon: "about" },

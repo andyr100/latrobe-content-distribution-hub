@@ -1,5 +1,5 @@
-import { ReportsWorkspace } from "@/components/reports/ReportsWorkspace";
+import { redirect } from "next/navigation";
 
 export default function ReportsPage() {
-  return <ReportsWorkspace />;
+  redirect("/hubintelligence");
 }
