@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
-import type { ApiEnvelope, FeedDto } from "@latrobe/api-contract";
+import type { ApiEnvelope, FeedDto, UserDto } from "@latrobe/api-contract";
 
 type Channel = Pick<FeedDto, "id" | "code" | "title">;
 type FeedItem = {
@@ -23,6 +23,8 @@ function text(element: Element, selector: string) {
 
 export default function RssClientPage() {
   const [channels, setChannels] = useState<Channel[]>([]);
+  const [users, setUsers] = useState<UserDto[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedCode, setSelectedCode] = useState("");
   const [title, setTitle] = useState("");
   const [items, setItems] = useState<FeedItem[]>([]);
@@ -33,6 +35,8 @@ export default function RssClientPage() {
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(AUTO_REFRESH_DEFAULT);
   const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(AUTO_REFRESH_INTERVAL_SECONDS);
   const [clientId, setClientId] = useState("");
+  const selectedUser = users.find((user) => user.id === selectedUserId) ?? null;
+  const activeClientId = selectedUser ? `rss-client-${selectedUser.id}-${clientId}` : "";
 
   useEffect(() => {
     const existing = window.localStorage.getItem(CLIENT_ID_KEY);
@@ -47,6 +51,18 @@ export default function RssClientPage() {
     if (response.ok) {
       const payload = (await response.json()) as ApiEnvelope<{ requestCount: number }>;
       if (payload.success) setRequestCount(payload.data.requestCount);
+    }
+  }, []);
+
+  const loadUsers = useCallback(async () => {
+    try {
+      const response = await fetch("/api/users");
+      if (!response.ok) throw new Error("The API is unavailable");
+      const payload = (await response.json()) as ApiEnvelope<UserDto[]>;
+      if (!payload.success) throw new Error(payload.error.message);
+      setUsers(payload.data);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to load mock users");
     }
   }, []);
 
@@ -74,13 +90,18 @@ export default function RssClientPage() {
     return () => window.clearTimeout(timer);
   }, [loadChannels]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadUsers(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadUsers]);
+
   const loadFeed = useCallback(async () => {
-    if (!selectedCode || !clientId) return;
+    if (!selectedCode || !activeClientId) return;
     setFetching(true);
     setError(null);
     try {
       const response = await fetch(`/api/rss/${encodeURIComponent(selectedCode)}`, {
-        headers: { "X-Client-Id": clientId },
+        headers: { "X-Client-Id": activeClientId },
       });
       if (!response.ok)
         throw new Error(
@@ -110,16 +131,16 @@ export default function RssClientPage() {
     } finally {
       setFetching(false);
     }
-  }, [clientId, refreshCount, selectedCode]);
+  }, [activeClientId, refreshCount, selectedCode]);
 
   useEffect(() => {
-    if (!selectedCode) return;
+    if (!selectedCode || !activeClientId) return;
     const initial = window.setTimeout(() => void loadFeed(), 0);
     return () => window.clearTimeout(initial);
-  }, [loadFeed, selectedCode]);
+  }, [activeClientId, loadFeed, selectedCode]);
 
   useEffect(() => {
-    if (!selectedCode || !autoRefreshEnabled) return;
+    if (!selectedCode || !activeClientId || !autoRefreshEnabled) return;
     const refresh = window.setInterval(() => {
       void loadFeed();
       setSecondsUntilRefresh(AUTO_REFRESH_INTERVAL_SECONDS);
@@ -135,7 +156,7 @@ export default function RssClientPage() {
       window.clearInterval(refresh);
       window.clearInterval(countdown);
     };
-  }, [autoRefreshEnabled, loadFeed, selectedCode]);
+  }, [activeClientId, autoRefreshEnabled, loadFeed, selectedCode]);
 
   const countdownStyle = {
     "--progress": `${(secondsUntilRefresh / AUTO_REFRESH_INTERVAL_SECONDS) * 360}deg`,
@@ -151,9 +172,30 @@ export default function RssClientPage() {
           <h1>RSS Client — Mock LMS View</h1>
         </div>
       </header>
-      <p className="muted">Select a channel to load its first-party RSS 2.0 feed automatically.</p>
+      <p className="muted">
+        Select a mock LMS user and a Channel to load its first-party RSS 2.0 feed automatically.
+      </p>
       <section className="card">
         <div className="controls">
+          <label>
+            <span className="channel-label">Mock user</span>
+            <select
+              aria-label="Mock user"
+              value={selectedUserId}
+              disabled={!users.length}
+              onChange={(event) => {
+                setSelectedUserId(event.target.value);
+                setSecondsUntilRefresh(AUTO_REFRESH_INTERVAL_SECONDS);
+              }}
+            >
+              <option value="">Select a user to continue</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name} — {user.role}
+                </option>
+              ))}
+            </select>
+          </label>
           <label>
             <span className="channel-label">
               Channel{" "}
@@ -163,7 +205,7 @@ export default function RssClientPage() {
             </span>
             <select
               value={selectedCode}
-              disabled={loading}
+              disabled={loading || !selectedUser}
               onChange={(event) => {
                 setSelectedCode(event.target.value);
                 setSecondsUntilRefresh(AUTO_REFRESH_INTERVAL_SECONDS);
@@ -214,8 +256,9 @@ export default function RssClientPage() {
           <span>
             Successful RSS requests: <strong>{requestCount ?? "—"}</strong>
           </span>
-          <span title={clientId}>
-            Client ID: <strong>{clientId ? clientId.slice(-12) : "initialising…"}</strong>
+          <span title={activeClientId}>
+            Client ID:{" "}
+            <strong>{activeClientId ? activeClientId.slice(-24) : "select a user"}</strong>
           </span>
         </div>
       </section>
