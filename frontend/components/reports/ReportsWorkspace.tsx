@@ -79,7 +79,8 @@ export function ReportsWorkspace() {
               variant="secondary"
               onClick={() => void refresh()}
               disabled={loading}
-              aria-label="Refresh reports"
+              aria-label="Refresh reports for the selected reporting period"
+              title="Refresh reports for the selected reporting period"
             >
               <Icon name="pulse" className="size-4" />
             </Button>
