@@ -22,6 +22,12 @@ let channelRssRoute: typeof import("../app/rss/[channelCode]/route");
 let healthRoute: typeof import("../app/health/route");
 let countRoute: typeof import("../app/count/route");
 let statsRoute: typeof import("../app/stats/route");
+let metricSummaryRoute: typeof import("../app/api/metrics/summary/route");
+let requestsByFeedRoute: typeof import("../app/api/metrics/requests-by-feed/route");
+let requestsByClientRoute: typeof import("../app/api/metrics/requests-by-client/route");
+let requestsOverTimeRoute: typeof import("../app/api/metrics/requests-over-time/route");
+let feedStatusRoute: typeof import("../app/api/feed-status/route");
+let alertsRoute: typeof import("../app/api/alerts/route");
 let database: typeof import("../lib/sequelize");
 let models: typeof import("../models");
 let postService: typeof import("../services/posts");
@@ -40,6 +46,12 @@ before(async () => {
   healthRoute = await import("../app/health/route");
   countRoute = await import("../app/count/route");
   statsRoute = await import("../app/stats/route");
+  metricSummaryRoute = await import("../app/api/metrics/summary/route");
+  requestsByFeedRoute = await import("../app/api/metrics/requests-by-feed/route");
+  requestsByClientRoute = await import("../app/api/metrics/requests-by-client/route");
+  requestsOverTimeRoute = await import("../app/api/metrics/requests-over-time/route");
+  feedStatusRoute = await import("../app/api/feed-status/route");
+  alertsRoute = await import("../app/api/alerts/route");
   database = await import("../lib/sequelize");
   models = await import("../models");
   postService = await import("../services/posts");
@@ -60,6 +72,9 @@ test("fresh migration creates and seeds the explicit feed schema", async () => {
   );
   assert(tables.has("Feeds"));
   assert(tables.has("PostFeeds"));
+  assert(tables.has("RequestLogs"));
+  assert(tables.has("FeedStatusEvents"));
+  assert(tables.has("Alerts"));
   assert(!tables.has("Topics"));
   assert(!tables.has("PostTopics"));
   const columns = await database.sequelize.getQueryInterface().describeTable("Posts");
@@ -240,6 +255,58 @@ test("operational endpoints share the documented response contract", async () =>
   assert.equal(stats.data.totalPosts, 17);
   assert.equal(stats.data.successfulRssRequests, count.data.requestCount);
   assert.equal(stats.data.postsPerFeed.length, 8);
+});
+
+test("Assessment 3 metrics aggregate persisted RSS operations", async () => {
+  const summaryResponse = await metricSummaryRoute.GET(
+    new Request("http://test/api/metrics/summary?range=all"),
+  );
+  const summary = await json<{
+    totalRequests: number;
+    uniqueClients: number;
+    totalFeeds: number;
+    healthyFeeds: number;
+  }>(summaryResponse);
+  assert.equal(summaryResponse.status, 200);
+  assert.equal(summary.data.totalRequests, 3);
+  assert.equal(summary.data.uniqueClients, 2);
+  assert.equal(summary.data.totalFeeds, 8);
+  assert.equal(summary.data.healthyFeeds, 1);
+
+  const byFeed = await json<Array<{ code: string; totalRequests: number }>>(
+    await requestsByFeedRoute.GET(
+      new Request("http://test/api/metrics/requests-by-feed?range=all"),
+    ),
+  );
+  assert(byFeed.data.some((row) => row.code === "HACKATHONS" && row.totalRequests === 1));
+
+  const byClient = await json<Array<{ clientId: string; totalRequests: number }>>(
+    await requestsByClientRoute.GET(
+      new Request("http://test/api/metrics/requests-by-client?range=all"),
+    ),
+  );
+  assert(byClient.data.some((row) => row.clientId === "api-test-client"));
+
+  const activity = await json<Array<{ totalRequests: number }>>(
+    await requestsOverTimeRoute.GET(
+      new Request("http://test/api/metrics/requests-over-time?range=all"),
+    ),
+  );
+  assert(activity.data.reduce((total, row) => total + row.totalRequests, 0) === 3);
+
+  const statuses = await json<Array<{ status: string }>>(await feedStatusRoute.GET());
+  assert.equal(statuses.data.length, 8);
+  assert(statuses.data.some((row) => row.status === "HEALTHY"));
+
+  const alerts = await json<unknown[]>(
+    await alertsRoute.GET(new Request("http://test/api/alerts?resolved=all")),
+  );
+  assert.equal(alerts.success, true);
+
+  const invalid = await metricSummaryRoute.GET(
+    new Request("http://test/api/metrics/summary?range=forever"),
+  );
+  assert.equal(invalid.status, 400);
 });
 
 test("delete removes the post and its join rows", async () => {
