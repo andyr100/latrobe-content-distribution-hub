@@ -45,7 +45,7 @@ export default function AboutPage() {
       <div className="grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
         <GlassCard className="p-6 sm:p-8">
           <div className="flex flex-wrap gap-2">
-            <Badge>Assessment 2</Badge>
+            <Badge>Assessment 3</Badge>
             <Badge tone="cyan">Next.js + Sequelize</Badge>
             <Badge tone="neutral">SQLite + Docker</Badge>
           </div>
@@ -66,8 +66,9 @@ export default function AboutPage() {
               <h3 className="font-bold">Assessment boundary</h3>
             </div>
             <p className="muted mt-3 text-sm leading-6">
-              User selection remains mock authentication and there is no production LMS connection.
-              Analytics, alerts and rule-based interpretation are deferred to Assessment 3.
+              Assessment 3 adds persisted request analytics, feed status history, alerts, reports,
+              and repeatable test evidence. User selection remains mock authentication and there is
+              no production LMS connection.
             </p>
           </div>
         </GlassCard>
@@ -110,10 +111,11 @@ export default function AboutPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="eyebrow">Assessment demonstration</p>
-            <h2 className="mt-2 text-2xl font-bold">Assessment 2 video walkthrough</h2>
+            <h2 className="mt-2 text-2xl font-bold">Assessment 3 video walkthrough</h2>
             <p className="muted mt-2 max-w-3xl leading-7">
-              This video demonstrates Docker, the API and SQLite schema, post CRUD, persistent
-              storage, operational endpoints, and RSS delivery to the separate mock LMS client.
+              This video demonstrates live operational data, reports and alerts, automated tests,
+              load and accessibility evidence, Docker persistence, and RSS delivery to the separate
+              mock LMS client.
             </p>
           </div>
           <Badge tone={video ? "cyan" : "neutral"}>
@@ -130,7 +132,7 @@ export default function AboutPage() {
             <iframe
               className="aspect-video w-full"
               src={video.url}
-              title="Assessment 2 video walkthrough"
+              title="Assessment 3 video walkthrough"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             />

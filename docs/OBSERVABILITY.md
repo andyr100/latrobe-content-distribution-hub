@@ -23,4 +23,6 @@ Open:
 - Jaeger: http://localhost:16686 — select `latrobe-content-api` and find traces.
 - Prometheus: http://localhost:9090 — query `traces_span_metrics_calls_total` or inspect the `otel-span-metrics` target.
 
-The normal `docker compose up --build -d` command does not enable telemetry or start these services. The profile therefore cannot interfere with Assessment 2 continuity or an EC2 deployment that only needs application-level metrics.
+The profile was verified with live `/health` and `/rss/CLOUDDEVOPS` requests: Jaeger returned `latrobe-content-api` traces, the Prometheus target was up, and `traces_span_metrics_calls_total` contained API span series. This is implementation evidence, not a promise about a future deployment.
+
+The normal `docker compose up --build -d` command does not enable telemetry or start these services. The profile therefore cannot interfere with Assessment 1/2 continuity or an EC2 deployment that only needs application-level metrics.

@@ -1,303 +1,192 @@
 # La Trobe Content Distribution Hub
 
-This repository contains the complete Cloud Based Applications Assessment 2 submission. It extends the Assessment 1 interface into a backend-driven content distribution system: a publishing frontend creates and manages posts through a REST API, Sequelize persists them in SQLite, the API publishes RSS 2.0 XML, and a separate RSS Client receives and displays those feeds as a mock LMS.
+Assessment 3 extends the existing publishing and RSS system with persistent operational metrics, live dashboards, reporting, alerts, automated browser tests, load testing, accessibility evidence, and optional OpenTelemetry. Assessment 1 and 2 workflows remain intact: authors manage posts, Sequelize persists them in SQLite, the API publishes RSS 2.0, and a separate mock LMS client consumes it.
 
-The three applications import their API envelopes and DTOs from the local `@latrobe/api-contract` package in `shared/`. This keeps browser clients and API responses aligned with one TypeScript source of truth; `docs/openapi.yaml` is the machine-readable HTTP contract.
+## What is included
 
-## Assessment requirements covered
+- A publishing frontend with post CRUD, fixed Channels, database inspection, Dashboard, and Reports.
+- A Next.js API/RSS server backed by Sequelize migrations and a persistent SQLite volume.
+- A separate RSS Client with a stable browser client ID sent on every feed request.
+- Database-backed `RequestLog`, `FeedStatusEvent`, and `Alert` records.
+- Summary, per-feed, per-client, time-series, recent-activity, status, and alert APIs.
+- Playwright server/client journeys, a staged JMeter plan, and repeatable Lighthouse checks.
+- Optional OpenTelemetry Collector, Jaeger, and Prometheus services.
 
-| Requirement                  | Evidence in this submission                                                                                                                                                                           |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Database schema and ORM      | Sequelize models and migrations represent users/authors, posts, publication dates, body content, images, links, feeds and many-to-many post/feed assignments. Data persists in a named SQLite volume. |
-| CRUD API                     | Posts can be created, listed/read, updated and deleted through predictable JSON endpoints. Validation and transactions prevent partial or invalid records.                                            |
-| RSS Server and Client        | The API generates combined and channel-specific RSS 2.0 XML. A separate Next.js RSS Client parses and displays a selected feed.                                                                       |
-| Operational endpoints        | `/health` checks the API and database, `/count` reports successful RSS requests, and `/stats` reports database-driven usage totals.                                                                   |
-| Docker                       | Four independently running Compose services provide reproducible frontend, API, RSS Client and SQLite-volume operation with health checks.                                                            |
-| Frontend/backend integration | Publishing, post management, dashboard statistics, channel pages and the read-only database inspector all use API/database data.                                                                      |
-| Code quality and GitHub      | Modular TypeScript, shared DTOs, migrations, automated tests, lint/build checks, GitHub Actions, feature branches and documented setup.                                                               |
+The applications share TypeScript DTOs from `shared/`; [docs/openapi.yaml](docs/openapi.yaml) is the machine-readable HTTP contract.
 
-## Technology
+## Assessment progression
 
-- Next.js 16.3.0, React 19.2.4 and TypeScript
-- Sequelize 6 with SQLite
-- Node.js 20.19.5 Docker images
-- Docker Compose
-- Node's built-in test runner and GitHub Actions
+- Assessment 1 established the responsive, accessible publishing interface and design system.
+- Assessment 2 connected that interface to post CRUD, Sequelize/SQLite persistence, RSS Server routes, Docker Compose, and the separate RSS Client/mock LMS.
+- Assessment 3 preserves those capabilities and adds persisted usage history, client identity, operational status and alerts, Dashboard/Reports, automated browser and load tests, accessibility evidence, and optional telemetry.
 
-## Architecture
+## Architecture and ports
 
-| Compose service | Responsibility                                                         | Technology                                | Local port |
-| --------------- | ---------------------------------------------------------------------- | ----------------------------------------- | ---------: |
-| `frontend`      | Publishing UI, dashboard, post reader and read-only database inspector | Next.js, React, TypeScript                |       3000 |
-| `api`           | REST API, RSS Server, validation, migrations and SQLite ownership      | Next.js Route Handlers, Sequelize, SQLite |       4000 |
-| `rss-client`    | Separate mock LMS that parses and displays RSS                         | Next.js, React, TypeScript                |       5000 |
-| `sqlite`        | Lightweight holder for the named SQLite volume                         | BusyBox                                   |          — |
-
-These are four services in one Docker Compose stack, not four services in one container. Each service runs in its own container on the private Compose network. Only the API mounts the database at `/app/data/content-hub.sqlite`; the RSS Client never accesses SQLite directly.
+| Service         | Purpose                                            | Local URL             |
+| --------------- | -------------------------------------------------- | --------------------- |
+| `frontend`      | Publishing, Dashboard, Reports, database inspector | http://localhost:3000 |
+| `api`           | REST, RSS, metrics, alerts, migrations             | http://localhost:4000 |
+| `rss-client`    | Separate mock LMS RSS consumer                     | http://localhost:5000 |
+| `sqlite`        | Named-volume holder for persistent API data        | private               |
+| `metrics-tools` | One-shot demo-data/reset utility (`tools` profile) | private               |
 
 ```mermaid
 flowchart LR
-  Browser -->|JSON CRUD| Frontend[Frontend :3000]
-  Frontend -->|REST| API[API and RSS Server :4000]
-  RSSClient[RSS Client :5000] -->|RSS XML on selection / optional 15-second refresh| API
-  API -->|Sequelize| SQLite[(SQLite named volume)]
+  Browser --> Frontend[Frontend :3000]
+  Frontend -->|REST and metrics| API[API/RSS :4000]
+  RSSClient[RSS Client :5000] -->|RSS + client ID| API
+  API -->|Sequelize| SQLite[(SQLite volume)]
+  API -. optional OTLP .-> Collector[OTel Collector]
+  Collector -.-> Jaeger
+  Collector -.-> Prometheus
 ```
 
-## Repository structure
+Only the API and one-shot tools mount the database volume. The clients never access SQLite directly.
 
-```text
-latrobe-content-distribution-hub/
-├── frontend/                 # Publishing/admin Next.js application
-│   ├── app/                  # Dashboard, posts, channels, database and About pages
-│   ├── components/           # Reusable interface and workflow components
-│   └── Dockerfile
-├── api/                      # REST API and RSS Server Next.js application
-│   ├── app/                  # JSON, operational and RSS route handlers
-│   ├── migrations/           # Versioned Sequelize schema changes
-│   ├── models/               # User, Post, Feed, PostFeed and RequestCounter
-│   ├── services/             # Post and RSS business logic
-│   ├── tests/                # Isolated API/RSS integration tests
-│   └── Dockerfile
-├── rss-client/               # Separate mock LMS Next.js application
-├── shared/                   # Shared API response and DTO TypeScript contract
-├── docs/openapi.yaml         # Machine-readable API contract
-├── scripts/smoke-test.ps1    # Docker health and persistence smoke test
-├── docker-compose.yml        # Local four-service stack
-└── docker-compose.ec2.override.yml
-```
+## Start locally with Docker (recommended)
 
-## Application pages
+Prerequisites: Docker Desktop with Compose v2 and Git.
 
-| URL                              | Purpose                                                                  |
-| -------------------------------- | ------------------------------------------------------------------------ |
-| `http://localhost:3000`          | Dashboard with database-driven post, feed and RSS-request statistics     |
-| `http://localhost:3000/posts`    | Create, filter, edit and delete posts and assign one or more Channels    |
-| `http://localhost:3000/channels` | Read-only fixed Channel catalogue and related posts                      |
-| `http://localhost:3000/database` | Read-only table inspector used to demonstrate actual SQLite persistence  |
-| `http://localhost:3000/workflow` | Explanation of the publishing-to-RSS workflow                            |
-| `http://localhost:3000/settings` | Application preferences and Git commit information                       |
-| `http://localhost:3000/about`    | Project scope, service ports and assessment-video embed                  |
-| `http://localhost:5000`          | Separate RSS Client/mock LMS with channel selection and refresh controls |
-
-## Database schema
-
-Versioned Sequelize migrations create the schema. Startup applies only migrations that have not previously been recorded in `SchemaMigrations`, then the idempotent seed adds the four demo users, eight fixed feeds, sample posts, relationships and request counter. Production startup does not use `sequelize.sync()`.
-
-```mermaid
-erDiagram
-  USER ||--o{ POST : authors
-  POST ||--o{ POST_FEED : assigned_to
-  FEED ||--o{ POST_FEED : contains
-  USER {
-    string id PK
-    string name
-    string email UK
-    string role
-  }
-  POST {
-    integer id PK
-    string title
-    text body
-    string authorId FK
-    datetime publishedAt
-    string imageUrl
-    string externalLink
-  }
-  FEED {
-    string id PK
-    string code UK
-    string title
-    string description
-    string slug UK
-  }
-  POST_FEED {
-    integer postId PK,FK
-    string feedId PK,FK
-  }
-  REQUEST_COUNTER {
-    string key PK
-    integer count
-  }
-```
-
-Foreign keys protect author and feed relationships. Join rows cascade when a post is deleted. Indexes cover publication dates, authors, feed codes/slugs and join-table lookup keys. The first migration also upgrades an earlier installation to the explicit `Feed`/`PostFeed` schema and removes the obsolete classification column without requiring the Docker volume to be deleted.
-
-The UI calls feeds **Channels** because that is clearer to a publisher. The database calls them feeds because each record explicitly represents an RSS feed.
-
-## API contract
-
-JSON success responses use:
-
-```json
-{ "success": true, "data": {}, "meta": {} }
-```
-
-JSON errors use:
-
-```json
-{ "success": false, "error": { "code": "VALIDATION_ERROR", "message": "...", "details": {} } }
-```
-
-| Method   | Endpoint                                                  | Purpose                                                         | Success |
-| -------- | --------------------------------------------------------- | --------------------------------------------------------------- | ------: |
-| `GET`    | `/api/posts?page=1&pageSize=20&search=&authorId=&feedId=` | Paginated post list and filters                                 |     200 |
-| `POST`   | `/api/posts`                                              | Create a post and feed relationships transactionally            |     201 |
-| `GET`    | `/api/posts/:id`                                          | Read one post                                                   |     200 |
-| `PATCH`  | `/api/posts/:id`                                          | Update content, author, publication date or feed relationships  |     200 |
-| `DELETE` | `/api/posts/:id`                                          | Delete a post and cascade its join rows                         |     200 |
-| `GET`    | `/api/feeds`                                              | Read the fixed feed catalogue                                   |     200 |
-| `GET`    | `/api/users`                                              | Read demo authors                                               |     200 |
-| `GET`    | `/health`                                                 | API and database health                                         | 200/503 |
-| `GET`    | `/count`                                                  | Successful RSS request count                                    |     200 |
-| `GET`    | `/stats`                                                  | Post/feed totals, latest post, per-feed totals and RSS requests |     200 |
-| `GET`    | `/rss`                                                    | Five newest unique posts as RSS 2.0 XML                         |     200 |
-| `GET`    | `/rss/:channelCode`                                       | All posts for one channel as RSS 2.0 XML                        | 200/404 |
-
-The fixed feed catalogue is intentionally read-only. Posts provide the assessment's complete create, read, update and delete workflow.
-
-Example create payload:
-
-```json
-{
-  "title": "Industry placement applications open",
-  "body": "Applications close Friday.",
-  "authorId": "administrator",
-  "feedIds": ["internships", "csit-news"],
-  "publishedAt": "2026-08-10T01:00:00.000Z",
-  "imageUrl": null,
-  "externalLink": "https://example.com/apply"
-}
-```
-
-Invalid JSON, malformed pagination, empty content, unknown authors, unknown feeds, invalid dates and non-HTTP URLs return predictable 400 responses. Missing posts or channels return 404. CORS is deliberately non-credentialed and permissive for this authentication-free assessment demonstration.
-
-Compatibility aliases `/api/topics` and `/api/rss/topics/:channelCode` remain temporarily available for older assessment links, but all current applications use `/api/feeds` and `/rss/:channelCode`.
-
-The machine-readable OpenAPI contract is in [`docs/openapi.yaml`](docs/openapi.yaml).
-
-## RSS behaviour
-
-- `http://localhost:4000/rss` returns exactly the five newest posts.
-- `http://localhost:4000/rss/FRONTIERLLMS` returns only that channel.
-- Successful combined and channel RSS responses increment the persistent `/count` value.
-- RSS titles, descriptions, authors, dates, GUIDs, links and optional images are XML-escaped consistently.
-- Each item links to the readable frontend page at `http://localhost:3000/posts/:id`.
-- The standalone client loads a selected channel automatically. Its switch can pause or resume the 15-second refresh, with a spinner and countdown while enabled. `NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED=true` controls the switch's default state at build time.
-
-## Run with Docker
-
-### Prerequisites
-
-- Docker Desktop with Docker Compose v2
-- Git
-- Node.js 20 only when running checks or applications outside Docker
-
-From a fresh clone, optionally copy `.env.example` to `.env`, then start the complete stack:
-
-```bash
-cp .env.example .env
+```powershell
 docker compose up --build -d
 docker compose ps
 ```
 
-The `.env` file is optional because Compose supplies safe local defaults. It supports these presentation settings:
-
-```env
-# Initial state of the RSS Client auto-refresh switch
-NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED=true
-
-# Locally served recording displayed on the About page
-NEXT_PUBLIC_ASSESSMENT_VIDEO_URL=/video/assessment-demo.mp4
-```
-
-These values are compiled into their browser applications. Run `docker compose up --build -d` after changing them. The RSS Client switch still pauses or resumes refresh immediately; reloading restores its environment-configured default.
-
-Expected URLs:
-
-- Frontend: http://localhost:3000
-- API: http://localhost:4000
-- RSS Client: http://localhost:5000
-- Health: http://localhost:4000/health
-- Request count: http://localhost:4000/count
-- Statistics: http://localhost:4000/stats
-
-To deliberately remove all demonstration data and test a fresh migration/seed:
-
-```bash
-docker compose down -v
-docker compose up --build -d
-```
-
-Do not use `down -v` for a normal restart. This preserves the named SQLite volume:
-
-```bash
-docker compose restart api
-```
-
-On Windows, the repeatable smoke test checks all three ports, health, RSS XML and persistence across an API restart:
+Open http://localhost:3000, http://localhost:4000/health, and http://localhost:5000. Run the repeatable health, RSS, and API-restart persistence check with:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/smoke-test.ps1
 ```
 
-## Local development and quality checks
+Normal restarts preserve data:
 
-```bash
+```powershell
+docker compose restart api
+```
+
+`docker compose down -v` removes the named database volume and should only be used when a deliberately clean database is wanted.
+
+## Start locally without Docker
+
+Use Node.js 20.19.5. Install all dependency sets once:
+
+```powershell
 npm ci
 npm ci --prefix api
 npm ci --prefix frontend
 npm ci --prefix rss-client
-npm run verify
 ```
 
-`npm run verify` checks formatting, lints all three applications, runs isolated API/RSS tests and creates all three production builds. Tests use a temporary SQLite database and never modify Docker demonstration data. GitHub Actions runs the same quality gates on feature branches and pull requests.
+Then use three terminals from the repository root:
 
-Start applications without Docker in separate terminals:
-
-```bash
+```powershell
 npm run dev:api
 npm run dev:frontend
 npm run dev:rss-client
 ```
 
-Migrations and the idempotent seed can also be run explicitly:
+The API automatically migrates and seeds its local SQLite database. The same URLs and ports shown above apply.
 
-```bash
-npm --prefix api run db:migrate
-npm --prefix api run db:seed
+## Dashboard and reports
+
+The Dashboard refreshes while open and shows total requests, unique clients, feed count, success rate, average latency, unresolved alerts, request activity, feed/client rankings, feed health, alerts, and recent server activity. Reports provides a selectable 24-hour/7-day/30-day range, accessible table equivalents, feed and client breakdowns, statuses, recent requests, and alert resolution.
+
+Metrics are derived from persisted records, not hard-coded totals. RSS responses remain available if metrics logging fails. `/count` remains a backwards-compatible count of successful RSS requests.
+
+The RSS Client creates `latrobe-rss-client.id.v1` in local storage and sends its stable value through `X-Client-Id`; `X-Client-Source` identifies the caller type. Requests without an ID receive a safe anonymous fallback.
+
+### Operational schema and metric definitions
+
+- `RequestLog` stores client/feed identity, endpoint, method, HTTP status, success, duration, request time, source, and user agent. Indexes cover time, client, feed, and success queries.
+- `FeedStatusEvent` records each feed observation as `HEALTHY`, `EMPTY`, `WARNING`, or `ERROR`, including item count, HTTP status, latency, and message.
+- `Alert` stores an unusual state, severity, feed, message, and resolved timestamps. Repeated matching failures reuse an unresolved alert instead of producing noise.
+- Total requests count logs in the selected range; unique clients count distinct client IDs; feed count comes from the feed table; success rate is successful requests divided by total requests; average latency is the mean recorded duration; unresolved alerts count alert records whose resolved flag is false.
+- A successful feed with items is healthy, a successful feed with no items is empty, 4xx responses are warnings, and 5xx/unexpected failures are errors. Failed RSS checks create a warning/error alert that can be resolved in Reports.
+
+## Operational API
+
+All JSON endpoints use `{ "success": true, "data": ... }` or a predictable error envelope.
+
+| Method  | Endpoint                                    | Purpose                                         |
+| ------- | ------------------------------------------- | ----------------------------------------------- |
+| `GET`   | `/api/metrics/summary?range=24h`            | KPI summary                                     |
+| `GET`   | `/api/metrics/requests-by-feed?range=7d`    | Per-feed totals and latency                     |
+| `GET`   | `/api/metrics/requests-by-client?range=7d`  | Per-client usage                                |
+| `GET`   | `/api/metrics/requests-over-time?range=24h` | Time buckets for charts                         |
+| `GET`   | `/api/metrics/recent?range=24h&limit=25`    | Recent request records                          |
+| `GET`   | `/api/feed-status`                          | Latest status for every feed                    |
+| `GET`   | `/api/alerts`                               | Alert list                                      |
+| `PATCH` | `/api/alerts/:id`                           | Resolve or reopen an alert                      |
+| `GET`   | `/health`                                   | API/database state, uptime, version, feed count |
+| `GET`   | `/count`                                    | Compatibility successful-request counter        |
+| `GET`   | `/rss`                                      | Five newest unique posts as RSS 2.0             |
+| `GET`   | `/rss/:channelCode`                         | One Channel's RSS 2.0 feed                      |
+
+The existing post CRUD, users, feeds, statistics, and compatibility routes are retained and documented in OpenAPI.
+
+## Demonstration data and reset
+
+For local Node development:
+
+```powershell
+npm run simulate:traffic
+npm run reset:metrics
 ```
 
-## EC2 port override
+For the Docker/EC2 named volume:
 
-Local development intentionally keeps `3000:3000`, `4000:4000` and `5000:5000`. The course diagram is represented by a separate override:
+```powershell
+docker compose --profile tools run --rm metrics-tools npm run simulate:traffic
+docker compose --profile tools run --rm metrics-tools npm run reset:metrics
+```
 
-```bash
-cp ec2.env.example ec2.env
+Simulation is deterministic and replaces only prior simulated records. Reset clears operational history and the compatibility counter while preserving users, posts, feeds, and relationships.
+
+## Verification
+
+```powershell
+npm run verify
+npm run test:e2e
+npm run test:a11y
+powershell -ExecutionPolicy Bypass -File scripts/run-lighthouse.ps1 -Label before
+powershell -ExecutionPolicy Bypass -File scripts/run-lighthouse.ps1 -Label after
+```
+
+- `verify` checks formatting, lint, 8 isolated API/RSS tests, and all production builds.
+- Playwright uses an isolated SQLite database and starts its own applications. See [docs/testing/PLAYWRIGHT.md](docs/testing/PLAYWRIGHT.md).
+- JMeter requires Java 17+ and Apache JMeter 5.6.3 on `PATH`. Its staged 1/10/100/1000/10000-user runner is `powershell -ExecutionPolicy Bypass -File tests/jmeter/run-stages.ps1`; parameters can override host, port, feed, and loops. The evidence procedure is in [docs/testing/JMETER.md](docs/testing/JMETER.md). High stages are deliberately opt-in and should run only on an appropriately sized environment.
+- Lighthouse JSON/HTML reports are generated under ignored `docs/testing/results/`; the procedure is in [docs/testing/LIGHTHOUSE.md](docs/testing/LIGHTHOUSE.md).
+
+Do not claim an unexecuted JMeter stage or Lighthouse result. Keep the raw generated evidence outside Git as configured by `.gitignore`.
+
+Accessibility remains part of the shared UI design: semantic headings and tables, labelled controls and status text, keyboard-visible focus, modal focus management, reduced-motion support, responsive layouts, and chart data available without relying on colour or graphics alone.
+
+## Optional observability
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.observability.yml --profile observability up --build -d
+```
+
+Jaeger is at http://localhost:16686 and Prometheus at http://localhost:9090. This opt-in profile exports API traces and span metrics without replacing the assessed database metrics. See [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md).
+
+## EC2 deployment
+
+Keep developing and verifying locally first. When the final commit passes, copy `ec2.env.example` to `ec2.env`, replace the placeholder host, and deploy:
+
+```powershell
 docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.override.yml up --build -d
 ```
 
-| Service    | Container port |      EC2 host port |
-| ---------- | -------------: | -----------------: |
-| Frontend   |           3000 |                 80 |
-| API        |           3000 |               4080 |
-| RSS Client |           5000 | private by default |
+The override publishes the frontend on TCP 80 and API on TCP 4080. The RSS Client remains private by default; expose it only if the marker must view it directly. In the EC2 security group, allow SSH 22 only from your IP, HTTP 80 from viewers, and 4080 only where the browser needs direct API access. Do not open all ports or expose SQLite. For production beyond assessment viewing, place the API behind an HTTPS reverse proxy and restrict 4080.
 
-Allow inbound TCP 80 and 4080 in the EC2 security group. Port 5000 is optional. The browser-facing frontend uses the public API URL from `ec2.env`, while the RSS Client proxy reaches `http://api:3000` on Docker's private network.
+## Evidence and video
 
-## Assessment video
+Use [talkingpoints.md](talkingpoints.md) for a concise recording sequence. Show the live Dashboard, an RSS request changing its values, Reports and alert resolution, Playwright output, executed JMeter evidence, Lighthouse before/after reports, Docker health/persistence, optional traces, and the milestone Git history. Replace the ignored `frontend/public/video/assessment-demo.mp4` or configure `NEXT_PUBLIC_ASSESSMENT_VIDEO_URL`, then rebuild the frontend.
 
-The final demonstration should be no longer than five minutes. A direct recording sequence is provided in [`talkingpoints.md`](talkingpoints.md). It shows:
+The audit and implementation rationale are recorded in [docs/ASSESSMENT_3_AUDIT.md](docs/ASSESSMENT_3_AUDIT.md).
 
-1. the four healthy Docker services and an API container shell;
-2. the Sequelize/SQLite schema and real table rows;
-3. `/health`, `/count` and `/stats`;
-4. a post being created in the frontend and stored in SQLite;
-5. that post arriving automatically in the separate RSS Client;
-6. update/delete behaviour and persistent storage after an API restart; and
-7. GitHub branches, commits, tests and successful Actions checks.
+## Workflow, limitations, and Assessment 4 readiness
 
-The local recording is expected at `frontend/public/video/assessment-demo.mp4` and is configured as `/video/assessment-demo.mp4` through `NEXT_PUBLIC_ASSESSMENT_VIDEO_URL`. Docker mounts that directory read-only into the frontend container, so the large MP4 remains outside Git and outside the Docker image. Replace the local file and rebuild the frontend after changing the environment path. External YouTube/embed URLs remain supported if needed later.
+Assessment 3 was delivered through focused `feature/a3-*` branches and milestone commits merged into `main`; GitHub Actions repeats formatting, lint, unit/integration tests, builds, and Playwright. Generated dependencies, SQLite files, browser reports, JMeter results, secrets, and video files remain ignored.
 
-## Submission workflow
-
-Assessment work is developed on feature branches and reviewed by automated checks before merging to `main`. The final submission is tagged `assessment-2-final`. Generated dependencies, Next.js output, environment secrets, local SQLite files and video files are excluded from Git.
+Known limitations are intentional: authentication and the LMS are mocked, client IDs identify browser installations rather than people, SQLite suits this single-instance assessment deployment but is not a horizontally shared database, in-process RSS logging is best-effort rather than a durable event queue, and telemetry is opt-in. These boundaries leave a clear Assessment 4 path toward real identity, HTTPS/domain routing, managed shared storage, retention policies, background event processing, and production alert delivery without prematurely adding Redis, Kafka, or another analytics database.

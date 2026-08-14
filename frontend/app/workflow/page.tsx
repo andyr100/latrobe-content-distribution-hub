@@ -31,7 +31,7 @@ export default function WorkflowPage() {
       />
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <GlassCard className="p-4">
-          <Badge>Assessment 2</Badge>
+          <Badge>Assessment 3</Badge>
           <p className="mt-3 text-sm font-bold">End-to-end workflow</p>
         </GlassCard>
         <GlassCard className="p-4">
@@ -83,9 +83,9 @@ export default function WorkflowPage() {
       <div className="mt-6 rounded-2xl border border-[var(--border-strong)] bg-[linear-gradient(115deg,color-mix(in_srgb,var(--primary)_10%,var(--surface)),color-mix(in_srgb,var(--cyan)_8%,var(--surface)))] p-5 sm:p-6">
         <p className="font-bold">A clear boundary for this assessment</p>
         <p className="muted mt-2 max-w-4xl text-sm leading-6">
-          Publishing, persistence, CRUD and RSS generation are real. User selection remains mock
-          authentication, and the RSS Client represents an LMS without connecting to a production
-          LMS. Advanced analytics and alerts remain Assessment 3 scope.
+          Publishing, persistence, CRUD, RSS generation, request analytics, status history and
+          alerts are database backed. User selection remains mock authentication, and the RSS Client
+          represents an LMS without connecting to a production LMS.
         </p>
       </div>
     </div>
