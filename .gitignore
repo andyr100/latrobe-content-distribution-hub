@@ -14,6 +14,8 @@ node_modules
 /coverage
 /playwright-report/
 /test-results/
+/tests/jmeter/results/
+/.tools/
 /api/tests/.playwright.sqlite*
 
 # next.js
