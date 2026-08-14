@@ -8,6 +8,9 @@
     "dev:rss-client": "npm --prefix rss-client run dev",
     "lint": "npm --prefix frontend run lint && npm --prefix api run lint && npm --prefix rss-client run lint",
     "test": "npm --prefix api test",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
     "simulate:traffic": "npm --prefix api run simulate:traffic",
     "reset:metrics": "npm --prefix api run reset:metrics",
     "build": "npm --prefix frontend run build && npm --prefix api run build && npm --prefix rss-client run build",
@@ -16,6 +19,7 @@
     "verify": "npm run format:check && npm run lint && npm run test && npm run build"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "prettier": "3.6.2"
   }
 }
