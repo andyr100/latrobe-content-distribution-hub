@@ -11,6 +11,7 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
+    "test:a11y": "powershell -ExecutionPolicy Bypass -File scripts/run-lighthouse.ps1 -Label after",
     "simulate:traffic": "npm --prefix api run simulate:traffic",
     "reset:metrics": "npm --prefix api run reset:metrics",
     "build": "npm --prefix frontend run build && npm --prefix api run build && npm --prefix rss-client run build",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "lighthouse": "^12.8.2",
     "prettier": "3.6.2"
   }
 }

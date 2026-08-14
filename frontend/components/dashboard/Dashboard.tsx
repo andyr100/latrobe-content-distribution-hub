@@ -118,6 +118,7 @@ export function Dashboard() {
             <Link
               href="/reports"
               className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[var(--primary)] px-4 text-sm font-bold text-white"
+              style={{ color: "#fff" }}
             >
               Open reports <Icon name="arrow" className="size-4" />
             </Link>
