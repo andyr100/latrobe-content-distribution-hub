@@ -90,5 +90,21 @@ services:
       start_period: 15s
       retries: 3
 
+  metrics-tools:
+    profiles: ["tools"]
+    build:
+      context: ./api
+      target: builder
+      additional_contexts:
+        contracts: ./shared
+    environment:
+      DATABASE_STORAGE: /metrics-data/content-hub.sqlite
+    volumes:
+      - sqlite-data:/metrics-data
+    depends_on:
+      sqlite:
+        condition: service_healthy
+    command: ["npm", "run", "simulate:traffic"]
+
 volumes:
   sqlite-data:
