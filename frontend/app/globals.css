@@ -16,6 +16,7 @@
   --cyan: #0798ae;
   --magenta: #a03a9f;
   --success: #16805c;
+  --warning: #a46108;
   --danger: #c33c58;
   --shadow: 0 20px 60px rgba(51, 47, 105, 0.11);
   color-scheme: light;
@@ -37,6 +38,7 @@
   --cyan: #45c8d8;
   --magenta: #de75d0;
   --success: #55d3a5;
+  --warning: #f3b95f;
   --danger: #ff7890;
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
   color-scheme: dark;

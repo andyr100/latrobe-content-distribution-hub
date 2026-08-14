@@ -40,7 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <footer className="border-t border-[var(--border)] px-5 py-6 text-center text-xs text-[var(--text-muted)]">
         <span className="font-semibold text-[var(--text)]">{appConfig.name}</span>
         {" · "}
-        {appConfig.student.name} · {appConfig.student.number} · Assessment 2 full stack
+        {appConfig.student.name} · {appConfig.student.number} · Assessment 3 operations
       </footer>
       <UserSelector />
     </div>

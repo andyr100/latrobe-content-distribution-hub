@@ -9,6 +9,7 @@ const items: { href: string; label: string; icon: IconName }[] = [
   { href: "/", label: "Dashboard", icon: "dashboard" },
   { href: "/posts", label: "Posts", icon: "posts" },
   { href: "/channels", label: "Channels", icon: "channels" },
+  { href: "/reports", label: "Reports", icon: "report" },
   { href: "/workflow", label: "Workflow", icon: "workflow" },
   { href: "/database", label: "Database", icon: "database" },
   { href: "/about", label: "About", icon: "about" },
@@ -103,9 +104,9 @@ export function Navigation() {
           <NavLinks />
         </nav>
         <div className="absolute bottom-7 left-4 right-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
-          <p className="text-xs font-bold">Assessment 2</p>
+          <p className="text-xs font-bold">Assessment 3</p>
           <p className="mt-1 text-[.7rem] leading-5 text-[var(--text-muted)]">
-            SQLite-backed publishing with real RSS output and a mock LMS client.
+            Live RSS operations, persisted metrics, reports and alerts.
           </p>
         </div>
       </aside>

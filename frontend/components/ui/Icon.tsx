@@ -22,7 +22,10 @@ export type IconName =
   | "check"
   | "trash"
   | "external"
-  | "clock";
+  | "clock"
+  | "report"
+  | "pulse"
+  | "alert";
 
 const paths: Record<IconName, React.ReactNode> = {
   dashboard: (
@@ -127,6 +130,18 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 2" />
+    </>
+  ),
+  report: (
+    <>
+      <path d="M5 3h14v18H5zM8 16v2M12 12v6M16 8v10" />
+    </>
+  ),
+  pulse: <path d="M3 12h4l2-6 4 12 2-6h6" />,
+  alert: (
+    <>
+      <path d="M12 3 2.8 20h18.4z" />
+      <path d="M12 9v4M12 17h.01" />
     </>
   ),
 };
