@@ -1,17 +1,8 @@
-import { initialiseDatabase } from "@/lib/sequelize";
-import { errorResponse, failure, options, xml } from "@/lib/http";
-import { incrementRssCount, loadChannelFeed, renderRss } from "@/services/rss";
+import { options } from "@/lib/http";
+import { GET as getChannelRss } from "@/app/rss/[channelCode]/route";
 type Context = { params: Promise<{ topicCode: string }> };
-export async function GET(_request: Request, context: Context) {
-  try {
-    await initialiseDatabase();
-    const code = decodeURIComponent((await context.params).topicCode).toUpperCase();
-    const feed = await loadChannelFeed(code);
-    if (!feed) return failure(404, "NOT_FOUND", "Channel was not found");
-    await incrementRssCount();
-    return xml(renderRss(feed));
-  } catch (error) {
-    return errorResponse(error);
-  }
+export async function GET(request: Request, context: Context) {
+  const { topicCode } = await context.params;
+  return getChannelRss(request, { params: Promise.resolve({ channelCode: topicCode }) });
 }
 export const OPTIONS = options;

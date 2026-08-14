@@ -191,7 +191,9 @@ test("a relationship failure rolls back a post created inside a transaction", as
 
 test("RSS output is valid, escaped, limited, channel-scoped and counted", async () => {
   const before = await models.RequestCounter.findOne({ where: { key: "rss-client-requests" } });
-  const combined = await rssRoute.GET();
+  const combined = await rssRoute.GET(
+    new Request("http://test/rss", { headers: { "X-Client-Id": "api-test-client" } }),
+  );
   const combinedXml = await combined.text();
   assert.equal(combined.status, 200);
   assert.match(combined.headers.get("content-type") ?? "", /application\/rss\+xml/);

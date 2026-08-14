@@ -1,6 +1,15 @@
 import { initialiseDatabase, sequelize } from "@/lib/sequelize";
 import { errorResponse, failure, ok, options } from "@/lib/http";
-import { Feed, Post, PostFeed, RequestCounter, User } from "@/models";
+import {
+  Alert,
+  Feed,
+  FeedStatusEvent,
+  Post,
+  PostFeed,
+  RequestCounter,
+  RequestLog,
+  User,
+} from "@/models";
 import { QueryTypes, type Model, type ModelStatic } from "sequelize";
 
 const tableModels = {
@@ -9,6 +18,9 @@ const tableModels = {
   feeds: Feed,
   "post-feeds": PostFeed,
   "request-counters": RequestCounter,
+  "request-logs": RequestLog,
+  "feed-status-events": FeedStatusEvent,
+  alerts: Alert,
 } as const;
 
 type Context = { params: Promise<{ tableName: string }> };

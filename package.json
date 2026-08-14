@@ -8,6 +8,8 @@
     "dev:rss-client": "npm --prefix rss-client run dev",
     "lint": "npm --prefix frontend run lint && npm --prefix api run lint && npm --prefix rss-client run lint",
     "test": "npm --prefix api test",
+    "simulate:traffic": "npm --prefix api run simulate:traffic",
+    "reset:metrics": "npm --prefix api run reset:metrics",
     "build": "npm --prefix frontend run build && npm --prefix api run build && npm --prefix rss-client run build",
     "format": "prettier --write \"{api,frontend,rss-client,shared}/**/*.{ts,tsx,js,json,css,md}\" \"docs/**/*.{yaml,yml,md}\" \"{README.md,talkingpoints.md,package.json,docker-compose.yml,docker-compose.ec2.override.yml}\"",
     "format:check": "prettier --check \"{api,frontend,rss-client,shared}/**/*.{ts,tsx,js,json,css,md}\" \"docs/**/*.{yaml,yml,md}\" \"{README.md,talkingpoints.md,package.json,docker-compose.yml,docker-compose.ec2.override.yml}\"",

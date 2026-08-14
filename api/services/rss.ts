@@ -1,5 +1,4 @@
-import { sequelize } from "@/lib/sequelize";
-import { Feed, Post, RequestCounter, User } from "@/models";
+import { Feed, Post, User } from "@/models";
 
 type RssPost = {
   id: number;
@@ -100,15 +99,4 @@ export function renderRss(feed: RssFeed) {
     ? `${serverTitle}: ${feed.code} — ${feed.title}`
     : `${serverTitle}: ${feed.title}`;
   return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/"><channel><title>${escapeXml(title)}</title><link>${escapeXml(feedLink)}</link><description>${escapeXml(feed.description)}</description><lastBuildDate>${new Date().toUTCString()}</lastBuildDate>${items}</channel></rss>`;
-}
-
-export async function incrementRssCount() {
-  await sequelize.transaction(async (transaction) => {
-    const [counter] = await RequestCounter.findOrCreate({
-      where: { key: "rss-client-requests" },
-      defaults: { key: "rss-client-requests", count: 0 },
-      transaction,
-    });
-    await counter.increment("count", { by: 1, transaction });
-  });
 }

@@ -28,6 +28,21 @@ const tables = [
     description: "Successful RSS request counters.",
   },
   {
+    id: "request-logs",
+    label: "RequestLogs",
+    description: "Assessment 3 RSS request records used for operational reporting.",
+  },
+  {
+    id: "feed-status-events",
+    label: "FeedStatusEvents",
+    description: "Persisted feed checks and their latest healthy, empty, warning or error state.",
+  },
+  {
+    id: "alerts",
+    label: "Alerts",
+    description: "Operational warnings and errors raised by RSS activity.",
+  },
+  {
     id: "schema-migrations",
     label: "SchemaMigrations",
     description: "Versioned database changes already applied to this SQLite file.",

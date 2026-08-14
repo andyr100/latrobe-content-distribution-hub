@@ -1,8 +1,9 @@
 import { DataTypes, type Sequelize } from "sequelize";
 import { feedSchemaMigration } from "@/migrations/001-feed-schema";
 import { rebuildPostFeedsMigration } from "@/migrations/002-rebuild-post-feeds";
+import { operationalMetricsMigration } from "@/migrations/003-operational-metrics";
 
-const migrations = [feedSchemaMigration, rebuildPostFeedsMigration];
+const migrations = [feedSchemaMigration, rebuildPostFeedsMigration, operationalMetricsMigration];
 
 export async function runMigrations(sequelize: Sequelize) {
   const queryInterface = sequelize.getQueryInterface();
