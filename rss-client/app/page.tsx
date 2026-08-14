@@ -15,6 +15,7 @@ type FeedItem = {
 const AUTO_REFRESH_INTERVAL_SECONDS = 15;
 const AUTO_REFRESH_DEFAULT =
   process.env.NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED?.toLowerCase() !== "false";
+const CLIENT_ID_KEY = "latrobe-rss-client.id.v1";
 
 function text(element: Element, selector: string) {
   return element.querySelector(selector)?.textContent?.trim() ?? "";
@@ -31,6 +32,15 @@ export default function RssClientPage() {
   const [error, setError] = useState<string | null>(null);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(AUTO_REFRESH_DEFAULT);
   const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(AUTO_REFRESH_INTERVAL_SECONDS);
+  const [clientId, setClientId] = useState("");
+
+  useEffect(() => {
+    const existing = window.localStorage.getItem(CLIENT_ID_KEY);
+    const next = existing || `rss-client-${crypto.randomUUID()}`;
+    if (!existing) window.localStorage.setItem(CLIENT_ID_KEY, next);
+    const timer = window.setTimeout(() => setClientId(next), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const refreshCount = useCallback(async () => {
     const response = await fetch("/api/count");
@@ -65,11 +75,13 @@ export default function RssClientPage() {
   }, [loadChannels]);
 
   const loadFeed = useCallback(async () => {
-    if (!selectedCode) return;
+    if (!selectedCode || !clientId) return;
     setFetching(true);
     setError(null);
     try {
-      const response = await fetch(`/api/rss/${encodeURIComponent(selectedCode)}`);
+      const response = await fetch(`/api/rss/${encodeURIComponent(selectedCode)}`, {
+        headers: { "X-Client-Id": clientId },
+      });
       if (!response.ok)
         throw new Error(
           response.status === 404
@@ -98,7 +110,7 @@ export default function RssClientPage() {
     } finally {
       setFetching(false);
     }
-  }, [refreshCount, selectedCode]);
+  }, [clientId, refreshCount, selectedCode]);
 
   useEffect(() => {
     if (!selectedCode) return;
@@ -201,6 +213,9 @@ export default function RssClientPage() {
           </span>
           <span>
             Successful RSS requests: <strong>{requestCount ?? "—"}</strong>
+          </span>
+          <span title={clientId}>
+            Client ID: <strong>{clientId ? clientId.slice(-12) : "initialising…"}</strong>
           </span>
         </div>
       </section>
