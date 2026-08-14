@@ -325,7 +325,9 @@ test("Assessment 3 metrics aggregate persisted RSS operations", async () => {
 test("Hub Intelligence aggregates filters and paginates request evidence", async () => {
   const overview = await json<{
     summary: { totalRequests: number; p95LatencyMs: number };
-    requestActivity: unknown[];
+    requestActivity: Array<{ totalRequests: number }>;
+    failedByFeed: Array<{ label: string; value: number }>;
+    rssUserDemand: Array<{ label: string; value: number }>;
   }>(
     await insightOverviewRoute.GET(
       new Request("http://test/api/insights/overview?range=all&rssUserId=ava-nguyen"),
@@ -335,6 +337,11 @@ test("Hub Intelligence aggregates filters and paginates request evidence", async
   assert(overview.data.summary.totalRequests >= 1);
   assert(overview.data.summary.p95LatencyMs >= 0);
   assert(overview.data.requestActivity.length >= 1);
+  assert(
+    overview.data.requestActivity.reduce((sum, item) => sum + Number(item.totalRequests), 0) >= 1,
+  );
+  assert(overview.data.rssUserDemand.some((item) => item.label === "Ava Nguyen"));
+  assert(Array.isArray(overview.data.failedByFeed));
   const logsResponse = await insightLogsRoute.GET(
     new Request(
       "http://test/api/insights/request-logs?range=all&page=1&pageSize=20&rssUserId=ava-nguyen",

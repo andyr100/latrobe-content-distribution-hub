@@ -200,6 +200,8 @@ export type HubOverview = {
   clientActivity: Array<{ bucket: string; activeClients: number }>;
   rssUserActivity: Array<{ bucket: string; activeRssUsers: number }>;
   sourceDistribution: Array<{ label: string; value: number }>;
+  failedByFeed: Array<{ label: string; value: number }>;
+  rssUserDemand: Array<{ label: string; value: number }>;
   postChannels: Array<{ label: string; value: number }>;
   topAuthors: Array<{ label: string; value: number }>;
   publishingUsers: Array<{ bucket: string; totalUsers: number }>;

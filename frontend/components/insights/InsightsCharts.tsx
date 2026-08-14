@@ -165,6 +165,79 @@ export function TrendChart({
   );
 }
 
+export function BarChart({
+  title,
+  points,
+  valueLabel = "Value",
+  secondaryLabel,
+}: {
+  title: string;
+  points: Point[];
+  valueLabel?: string;
+  secondaryLabel?: string;
+}) {
+  const shown = points.slice(-36);
+  const max = Math.max(...shown.flatMap((point) => [point.value, point.secondary ?? 0]), 1);
+  if (!shown.length) return <p className="muted py-8 text-sm">No data for the selected filters.</p>;
+  return (
+    <div className="mt-5">
+      <div
+        className="flex h-64 items-end gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4"
+        role="img"
+        aria-label={title}
+      >
+        {shown.map((point, index) => {
+          const delta = index ? point.value - shown[index - 1].value : 0;
+          return (
+            <div
+              key={point.label}
+              className="flex h-full min-w-0 flex-1 items-end gap-px"
+              title={`${point.label}: ${format(point.value)} ${valueLabel}${index ? ` (${delta >= 0 ? "+" : ""}${format(delta)} vs previous)` : ""}`}
+            >
+              <span
+                className="w-full rounded-t bg-[var(--primary)]"
+                style={{ height: `${Math.max((point.value / max) * 100, 2)}%` }}
+              />
+              {secondaryLabel && (
+                <span
+                  className="w-full rounded-t bg-[var(--cyan)]"
+                  style={{ height: `${Math.max(((point.secondary ?? 0) / max) * 100, 0)}%` }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="muted mt-2 flex justify-between text-xs">
+        <span>{shown[0].label}</span>
+        <span>
+          {format(max)} {valueLabel}
+        </span>
+        <span>{shown.at(-1)?.label}</span>
+      </div>
+      <table className="sr-only">
+        <caption>{title}</caption>
+        <thead>
+          <tr>
+            <th>Period</th>
+            <th>{valueLabel}</th>
+            {secondaryLabel && <th>{secondaryLabel}</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {shown.map((point) => (
+            <tr key={point.label}>
+              <td>{point.label}</td>
+              <td>{point.value}</td>
+              {secondaryLabel && <td>{point.secondary}</td>}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function DonutChart({
   title,
   rows,

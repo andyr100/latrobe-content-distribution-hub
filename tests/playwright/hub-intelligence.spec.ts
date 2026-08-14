@@ -11,7 +11,7 @@ test("Hub Intelligence filters, paginates and collapses its detailed evidence", 
   await expect(page.getByText("Filterable request log", { exact: true })).toBeVisible();
   await expect(page.getByLabel("RSS user").locator("option[value='ava-nguyen']")).toHaveCount(1);
 
-  await page.locator("label", { hasText: "Time" }).locator("select").selectOption("24h");
+  await page.getByRole("button", { name: "24h" }).click();
   await page.locator("label", { hasText: "RSS user" }).locator("select").selectOption("ava-nguyen");
   await page
     .locator("label", { hasText: "Request result" })
@@ -25,5 +25,5 @@ test("Hub Intelligence filters, paginates and collapses its detailed evidence", 
   await expect(page.getByLabel("Rows per page")).toBeHidden();
   await logPanel.click();
   await expect(page.getByLabel("Rows per page")).toBeVisible();
-  await expect(page.getByRole("img", { name: "RSS request activity" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "RSS requests over time" })).toBeVisible();
 });

@@ -106,6 +106,8 @@ export async function getInsightOverview(filters: InsightFilters) {
     clientActivity,
     rssUserActivity,
     sourceDistribution,
+    failedByFeed,
+    rssUserDemand,
     postChannels,
     topAuthors,
     publishingUserRows,
@@ -149,6 +151,14 @@ export async function getInsightOverview(filters: InsightFilters) {
     ),
     sequelize.query(
       `SELECT COALESCE(r.source, 'direct') label, COUNT(*) value FROM RequestLogs r ${requests.where} GROUP BY r.source ORDER BY value DESC`,
+      { replacements: requests.replacements, type: QueryTypes.SELECT },
+    ),
+    sequelize.query(
+      `SELECT COALESCE(f.code, 'COMBINED') label, COUNT(*) value FROM RequestLogs r LEFT JOIN Feeds f ON f.id = r.feedId ${requests.where ? `${requests.where} AND r.success = 0` : "WHERE r.success = 0"} GROUP BY r.feedId, f.code ORDER BY value DESC`,
+      { replacements: requests.replacements, type: QueryTypes.SELECT },
+    ),
+    sequelize.query(
+      `SELECT COALESCE(ru.name, 'Direct / unknown') label, COUNT(*) value FROM RequestLogs r LEFT JOIN RssUsers ru ON ru.id = r.rssUserId ${requests.where} GROUP BY r.rssUserId, ru.name ORDER BY value DESC`,
       { replacements: requests.replacements, type: QueryTypes.SELECT },
     ),
     sequelize.query(
@@ -218,6 +228,8 @@ export async function getInsightOverview(filters: InsightFilters) {
     clientActivity,
     rssUserActivity,
     sourceDistribution,
+    failedByFeed,
+    rssUserDemand,
     postChannels,
     topAuthors,
     publishingUsers: publishingUserRows.reduce<Array<{ bucket: string; totalUsers: number }>>(
