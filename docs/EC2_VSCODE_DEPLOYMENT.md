@@ -15,8 +15,9 @@ Use this security group:
 | 22 | TCP | Your public IPv4 `/32` | SSH and VS Code Remote SSH |
 | 80 | TCP | `0.0.0.0/0` | Frontend |
 | 4080 | TCP | Assessment viewers that need the browser API | Public API used by the frontend |
+| 5000 | TCP | Assessment viewers | Standalone RSS Client/mock LMS |
 
-The current assessment configuration maps frontend host port `80` to container port `3000` and API host port `4080` to container port `4000`. The RSS client and SQLite volume are private Docker services.
+The current assessment configuration maps frontend host port `80` to container port `3000`, API host port `4080` to container port `4000`, and RSS Client host port `5000` to container port `5000`. SQLite remains a private Docker volume.
 
 ## Host preparation
 
@@ -51,7 +52,7 @@ docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.ov
 curl -f http://127.0.0.1:4000/health
 ```
 
-From the local computer, verify `http://YOUR_EC2_PUBLIC_DNS` and `http://YOUR_EC2_PUBLIC_DNS:4080/health`.
+From the local computer, verify `http://YOUR_EC2_PUBLIC_DNS`, `http://YOUR_EC2_PUBLIC_DNS:4080/health`, and `http://YOUR_EC2_PUBLIC_DNS:5000`.
 
 ## VS Code Remote SSH
 

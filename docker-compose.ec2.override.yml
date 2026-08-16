@@ -20,4 +20,5 @@ services:
   rss-client:
     environment:
       API_BASE_URL: http://api:4000
-    ports: !override []
+    ports: !override
+      - "5000:5000"

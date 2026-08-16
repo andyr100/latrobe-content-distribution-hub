@@ -192,7 +192,7 @@ Jaeger is at http://localhost:16686 and Prometheus at http://localhost:9090. Thi
 docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.override.yml up --build -d
 ```
 
-The override publishes the frontend on TCP 80 and API on TCP 4080. The RSS Client remains private by default; expose it only if the marker must view it directly. In the EC2 security group, allow SSH 22 only from your IP, HTTP 80 from viewers, and 4080 only where the browser needs direct API access. Do not open all ports or expose SQLite. For production beyond assessment viewing, place the API behind an HTTPS reverse proxy and restrict 4080.
+The EC2 override publishes the frontend on TCP 80, API on TCP 4080, and the standalone RSS Client on TCP 5000 for assessment viewing. In the EC2 security group, allow SSH 22 only from your IP, HTTP 80 from viewers, 4080 where the browser needs direct API access, and 5000 where the RSS Client must be viewed. Do not open all ports or expose SQLite. For production beyond assessment viewing, place the API and RSS Client behind an HTTPS reverse proxy and restrict direct ports.
 
 ## Evidence and video
 
