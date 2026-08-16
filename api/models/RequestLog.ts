@@ -13,6 +13,7 @@ export class RequestLog extends Model<
 > {
   declare id: CreationOptional<number>;
   declare clientId: string;
+  declare clientType: string;
   declare rssUserId: string | null;
   declare feedId: string | null;
   declare endpoint: string;
@@ -32,6 +33,7 @@ export function initialiseRequestLog(sequelize: Sequelize) {
     {
       id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
       clientId: { type: DataTypes.STRING(100), allowNull: false },
+      clientType: { type: DataTypes.STRING(30), allowNull: false, defaultValue: "direct" },
       rssUserId: { type: DataTypes.STRING, allowNull: true },
       feedId: { type: DataTypes.STRING, allowNull: true },
       endpoint: { type: DataTypes.STRING(255), allowNull: false },
@@ -52,6 +54,7 @@ export function initialiseRequestLog(sequelize: Sequelize) {
       indexes: [
         { fields: ["requestedAt"] },
         { fields: ["clientId"] },
+        { fields: ["clientType", "requestedAt"] },
         { fields: ["rssUserId"] },
         { fields: ["feedId"] },
         { fields: ["feedId", "requestedAt"] },

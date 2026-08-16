@@ -6,6 +6,7 @@ Target: about seven minutes. Record only evidence that was actually executed.
 
 - Show the repository and explain the Assessment 1/2 continuity: publishing, SQLite, RSS Server, and separate mock LMS client.
 - State the Assessment 3 focus: persistent operational data, reporting, testing, and observability.
+- State clearly that this recording follows the final EC2 deployment; the 16 August evidence was first collected locally while implementation was being completed.
 
 ## 0:30-1:40 - Live Dashboard
 
@@ -27,14 +28,15 @@ Target: about seven minutes. Record only evidence that was actually executed.
 
 ## 3:15-4:15 - Playwright
 
-- Run `npm run test:e2e`.
+- Show `playwright-report/index.html` and the **3/3 passed in 22.9 seconds** result. If demonstrating a fresh run, stop `frontend`, `api`, and `rss-client`, run `npm run test:e2e`, then restart the containers so the isolated SQLite database is guaranteed.
 - Explain the server CRUD-to-RSS journey and separate RSS Client selection/rendering journey.
 - Mention that Playwright uses an isolated SQLite database and does not alter demo data.
 
 ## 4:15-5:15 - JMeter
 
 - Open `tests/jmeter/rss-load-test.jmx` and show parameterised users, ramp-up, loops, unique client IDs, and RSS assertions.
-- Show only genuinely executed staged result output. Discuss throughput, latency, and errors without inventing high-load evidence.
+- Open `docs/testing/ASSESSMENT_TEST_EVIDENCE.html`. State that all five required stages ran: x1, x10, x100 and x1,000 had 0% errors; x10,000 produced 9,971/10,000 timeouts (99.71%), left the API unhealthy, and required an API-only restart. The database volume remained intact and `/health` returned 200 about six seconds after restart.
+- Explain that one request per gradually started thread measures distinct-client arrival volume, not 10,000 simultaneous sustained connections. Different ramp durations mean the throughput figures are not direct capacity comparisons.
 - Point to `docs/testing/JMETER.md` for the repeatable runner and resource safeguards.
 
 ## 5:15-5:50 - Lighthouse
@@ -51,11 +53,32 @@ Target: about seven minutes. Record only evidence that was actually executed.
 ## 6:30-7:00 - Git and conclusion
 
 - Show the milestone feature branches, focused commits, and successful quality workflow.
-- Summarise backwards compatibility, persistent data, automated evidence, and EC2 readiness.
+- Show a clean `git status`, the GitHub homepage, and the EC2 URL. Summarise backwards compatibility, persistent data, automated evidence, measured local capacity limits, and Assessment 4 readiness.
+
+## Commands to keep beside the recording
+
+```powershell
+# Open the concise results page and full reports; do not rerun the 13-minute load test on camera.
+Start-Process .\docs\testing\ASSESSMENT_TEST_EVIDENCE.html
+Start-Process .\playwright-report\index.html
+Start-Process .\tests\jmeter\results\10000-users-report\index.html
+Start-Process .\docs\testing\results\lighthouse-dashboard-after.report.html
+
+# Safe Playwright rerun (uses the isolated SQLite database).
+docker compose stop frontend api rss-client
+npm run test:e2e
+npm run test:e2e:report
+docker compose start api frontend rss-client
+
+# Full staged JMeter rerun before recording, with Java 17+ and JMeter 5.6.3 on PATH.
+docker compose up --build -d
+powershell -ExecutionPolicy Bypass -File tests/jmeter/run-stages.ps1 -RunLabel "ec2-final"
+```
 
 ## Recording checklist
 
 - Use `docker compose --profile tools run --rm metrics-tools npm run simulate:traffic` before recording if meaningful history is needed.
 - Keep client IDs, ports, and URLs readable; do not expose AWS credentials or secrets.
+- Explain the current metric caveat if it is not fixed before recording: “Active RSS clients” counts access methods rather than distinct technical `clientId` values.
 - Confirm the embedded video path and rebuild the frontend before the final recording check.
 - Tag the reviewed final commit only after all checks pass.

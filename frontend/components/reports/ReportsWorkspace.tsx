@@ -18,6 +18,13 @@ const ranges: Array<{ value: MetricRangeDto; label: string }> = [
   { value: "30d", label: "Last 30 days" },
   { value: "all", label: "All recorded" },
 ];
+const clientLabels = {
+  browser: "Browser",
+  mobile_app: "Mobile app",
+  rss_reader: "RSS reader",
+  jmeter: "JMeter",
+  direct: "Direct",
+} as const;
 
 function date(value: string | null) {
   return value ? new Date(value).toLocaleString("en-AU") : "Not checked";
@@ -103,7 +110,7 @@ export function ReportsWorkspace() {
             `${data?.summary.successRate ?? 100}%`,
             `${data?.summary.failedRequests ?? 0} failed`,
           ],
-          ["Unique clients", data?.summary.uniqueClients ?? 0, "Distinct client IDs"],
+          ["Active RSS clients", data?.summary.uniqueClients ?? 0, "Distinct RSS access methods"],
           [
             "Average latency",
             `${data?.summary.averageLatencyMs ?? 0} ms`,
@@ -135,13 +142,13 @@ export function ReportsWorkspace() {
           />
         </GlassCard>
         <GlassCard className="p-5 sm:p-7">
-          <p className="eyebrow">Client demand</p>
-          <h2 className="mt-1 text-xl font-bold">Requests per client</h2>
+          <p className="eyebrow">RSS client demand</p>
+          <h2 className="mt-1 text-xl font-bold">Requests per RSS client</h2>
           <MetricBars
             rows={(data?.byClient ?? []).map((row) => ({
-              label: row.clientId,
+              label: clientLabels[row.clientType],
               value: row.totalRequests,
-              detail: `${row.source} · last seen ${date(row.lastRequestedAt)}`,
+              detail: `Last seen ${date(row.lastRequestedAt)}`,
             }))}
           />
         </GlassCard>
@@ -220,7 +227,7 @@ export function ReportsWorkspace() {
             <thead className="border-b border-[var(--border)] text-[var(--text-muted)]">
               <tr>
                 <th className="px-3 py-3">Time</th>
-                <th className="px-3 py-3">Client</th>
+                <th className="px-3 py-3">RSS client</th>
                 <th className="px-3 py-3">Feed</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="px-3 py-3">Latency</th>
@@ -230,8 +237,8 @@ export function ReportsWorkspace() {
               {(data?.recent ?? []).map((request) => (
                 <tr key={request.id}>
                   <td className="muted whitespace-nowrap px-3 py-3">{date(request.requestedAt)}</td>
-                  <td className="max-w-64 truncate px-3 py-3 font-medium" title={request.clientId}>
-                    {request.clientId}
+                  <td className="max-w-64 truncate px-3 py-3 font-medium">
+                    {clientLabels[request.clientType]}
                   </td>
                   <td className="px-3 py-3">{request.feedCode}</td>
                   <td className="px-3 py-3">

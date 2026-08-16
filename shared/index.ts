@@ -36,10 +36,11 @@ export type InsightFiltersDto = {
   feedId?: string;
   authorId?: string;
   rssUserId?: string;
-  clientId?: string;
+  clientType?: RssClientTypeDto;
   status?: "success" | "failure";
-  source?: string;
 };
+
+export type RssClientTypeDto = "browser" | "mobile_app" | "rss_reader" | "jmeter" | "direct";
 
 export type InsightLogDto = RecentRequestDto & {
   rssUserId: string | null;
@@ -113,8 +114,7 @@ export type RequestsByFeedDto = {
 };
 
 export type RequestsByClientDto = {
-  clientId: string;
-  source: string;
+  clientType: RssClientTypeDto;
   totalRequests: number;
   successfulRequests: number;
   failedRequests: number;
@@ -158,13 +158,13 @@ export type AlertDto = {
 export type RecentRequestDto = {
   id: number;
   clientId: string;
+  clientType: RssClientTypeDto;
   feedId: string | null;
   feedCode: string;
   endpoint: string;
   statusCode: number;
   success: boolean | number;
   durationMs: number;
-  source: string | null;
   requestedAt: string;
 };
 

@@ -9,7 +9,7 @@ export async function GET(request: Request, context: Context) {
     const response = await apiFetch(`/rss/${code}`, {
       headers: {
         "X-Client-Id": request.headers.get("x-client-id") ?? "rss-client-anonymous",
-        "X-Client-Source": "rss-client",
+        "X-Client-Source": "rss-reader",
         "X-Rss-User-Id": request.headers.get("x-rss-user-id") ?? "",
         "User-Agent": request.headers.get("user-agent") ?? "La Trobe RSS Client",
       },

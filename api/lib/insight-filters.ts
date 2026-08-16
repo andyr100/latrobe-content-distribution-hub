@@ -14,14 +14,19 @@ export function parseInsightFilters(request: Request): InsightFilters {
   const status = search.get("status") || undefined;
   if (status && status !== "success" && status !== "failure")
     throw new RangeError("status must be success or failure");
+  const clientType = optional(search, "clientType");
+  if (
+    clientType &&
+    !["browser", "mobile_app", "rss_reader", "jmeter", "direct"].includes(clientType)
+  )
+    throw new RangeError("clientType is invalid");
   return {
     range: range as MetricRange,
     ...(optional(search, "feedId") ? { feedId: optional(search, "feedId") } : {}),
     ...(optional(search, "authorId") ? { authorId: optional(search, "authorId") } : {}),
     ...(optional(search, "rssUserId") ? { rssUserId: optional(search, "rssUserId") } : {}),
-    ...(optional(search, "clientId") ? { clientId: optional(search, "clientId") } : {}),
+    ...(clientType ? { clientType } : {}),
     ...(status ? { status: status as "success" | "failure" } : {}),
-    ...(optional(search, "source") ? { source: optional(search, "source") } : {}),
   };
 }
 

@@ -3,12 +3,14 @@ import { feedSchemaMigration } from "@/migrations/001-feed-schema";
 import { rebuildPostFeedsMigration } from "@/migrations/002-rebuild-post-feeds";
 import { operationalMetricsMigration } from "@/migrations/003-operational-metrics";
 import { hubIntelligenceMigration } from "@/migrations/004-hub-intelligence";
+import { rssClientTypeMigration } from "@/migrations/005-rss-client-type";
 
 const migrations = [
   feedSchemaMigration,
   rebuildPostFeedsMigration,
   operationalMetricsMigration,
   hubIntelligenceMigration,
+  rssClientTypeMigration,
 ];
 
 export async function runMigrations(sequelize: Sequelize) {

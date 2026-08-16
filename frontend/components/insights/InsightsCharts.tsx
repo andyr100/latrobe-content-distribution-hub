@@ -1,331 +1,354 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useId, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "@/components/ui/Icon";
 
-type Point = { label: string; value: number; secondary?: number };
+export type InsightPoint = { label: string; axisLabel?: string; value: number };
 
-function format(value: number) {
-  return value.toLocaleString("en-AU", { maximumFractionDigits: 1 });
+function format(value: number, maximumFractionDigits = 1) {
+  return value.toLocaleString("en-AU", { maximumFractionDigits });
+}
+
+function PointerTooltip({
+  tooltip,
+}: {
+  tooltip: { x: number; y: number; content: ReactNode } | null;
+}) {
+  if (!tooltip || typeof document === "undefined") return null;
+  return createPortal(
+    <div
+      className="hub-tooltip"
+      role="tooltip"
+      style={{
+        left: Math.max(10, Math.min(tooltip.x + 14, window.innerWidth - 250)),
+        top: Math.max(10, Math.min(tooltip.y + 14, window.innerHeight - 90)),
+      }}
+    >
+      {tooltip.content}
+    </div>,
+    document.body,
+  );
 }
 
 export function InsightPanel({
   title,
-  eyebrow,
   children,
-  defaultOpen = true,
-  note,
+  open,
+  onToggle,
 }: {
   title: string;
-  eyebrow: string;
   children: ReactNode;
-  defaultOpen?: boolean;
-  note?: string;
+  open: boolean;
+  onToggle: () => void;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
-      <button
-        className="flex w-full items-center justify-between gap-4 p-5 text-left sm:p-6"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-      >
-        <span>
-          <span className="eyebrow">{eyebrow}</span>
-          <span className="mt-1 block text-xl font-bold">{title}</span>
-          {note && <span className="muted mt-1 block text-sm font-normal">{note}</span>}
-        </span>
-        <span className="grid size-10 place-items-center rounded-xl bg-[var(--surface-muted)] text-[var(--primary)]">
-          <Icon
-            name="chevron"
-            className={`size-5 transition-transform ${open ? "rotate-90" : ""}`}
-          />
+    <section className="panel">
+      <button className="paneltoggle" onClick={onToggle} aria-expanded={open}>
+        <h2>{title}</h2>
+        <span className={`chevbox ${open ? "is-open" : ""}`}>
+          <Icon name="chevron" />
         </span>
       </button>
-      {open && (
-        <div className="border-t border-[var(--border)] px-5 pb-5 pt-1 sm:px-6 sm:pb-6">
-          {children}
-        </div>
-      )}
+      {open && <div className="panelbody">{children}</div>}
     </section>
   );
 }
 
-export function TrendChart({
-  title,
-  points,
-  secondaryLabel,
-  valueLabel = "Value",
+export function KpiCard({
+  label,
+  value,
+  context,
+  icon,
+  color,
+  tip,
 }: {
-  title: string;
-  points: Point[];
-  secondaryLabel?: string;
-  valueLabel?: string;
+  label: string;
+  value: string | number;
+  context: string;
+  icon: "rss" | "posts" | "check" | "pulse" | "user" | "alert" | "channels";
+  color: string;
+  tip: string;
 }) {
-  const shown = points.slice(-60);
-  const max = Math.max(...shown.flatMap((point) => [point.value, point.secondary ?? 0]), 1);
-  const path = (key: "value" | "secondary") =>
-    shown
-      .map(
-        (point, index) =>
-          `${index ? "L" : "M"}${shown.length === 1 ? 50 : (index / (shown.length - 1)) * 100},${100 - ((point[key] ?? 0) / max) * 88 - 6}`,
-      )
-      .join(" ");
-  return (
-    <div className="mt-5">
-      {!shown.length ? (
-        <p className="muted py-8 text-sm">No data for the selected filters.</p>
-      ) : (
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; content: ReactNode } | null>(null);
+  const show = (x: number, y: number) =>
+    setTooltip({
+      x,
+      y,
+      content: (
         <>
-          <div className="relative h-56 rounded-xl border border-[var(--border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--primary)_8%,var(--surface)),var(--surface))] p-3">
-            <svg
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              className="h-full w-full"
-              role="img"
-              aria-label={title}
-            >
-              <path
-                d="M0,94 H100 M0,50 H100 M0,6 H100"
-                stroke="var(--border)"
-                strokeWidth=".5"
-                vectorEffect="non-scaling-stroke"
-              />
-              <path
-                d={path("value")}
-                fill="none"
-                stroke="var(--primary)"
-                strokeWidth="1.8"
-                vectorEffect="non-scaling-stroke"
-              />
-              {secondaryLabel && (
-                <path
-                  d={path("secondary")}
-                  fill="none"
-                  stroke="var(--danger)"
-                  strokeWidth="1.4"
-                  strokeDasharray="3 2"
-                  vectorEffect="non-scaling-stroke"
-                />
-              )}
-              {shown.map((point, index) => (
-                <circle
-                  key={point.label}
-                  cx={shown.length === 1 ? 50 : (index / (shown.length - 1)) * 100}
-                  cy={100 - (point.value / max) * 88 - 6}
-                  r="1.8"
-                  fill="var(--primary)"
-                >
-                  <title>{`${point.label}: ${format(point.value)} ${valueLabel}${index ? ` (${point.value >= shown[index - 1].value ? "+" : ""}${format(point.value - shown[index - 1].value)} vs previous)` : ""}`}</title>
-                </circle>
-              ))}
-            </svg>
-            <div className="muted absolute bottom-2 left-3 right-3 flex justify-between text-xs">
-              <span>{shown[0].label}</span>
-              <span>
-                {format(max)} {valueLabel}
-              </span>
-              <span>{shown.at(-1)?.label}</span>
-            </div>
-          </div>
-          <div className="mt-3 flex gap-4 text-xs">
-            <span>
-              <i className="mr-1 inline-block size-2 rounded-full bg-[var(--primary)]" />
-              {valueLabel}
-            </span>
-            {secondaryLabel && (
-              <span>
-                <i className="mr-1 inline-block size-2 rounded-full bg-[var(--danger)]" />
-                {secondaryLabel}
-              </span>
-            )}
-          </div>
-          <table className="sr-only">
-            <caption>{title}</caption>
-            <thead>
-              <tr>
-                <th>Period</th>
-                <th>{valueLabel}</th>
-                {secondaryLabel && <th>{secondaryLabel}</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((point) => (
-                <tr key={point.label}>
-                  <td>{point.label}</td>
-                  <td>{point.value}</td>
-                  {secondaryLabel && <td>{point.secondary}</td>}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <strong>{label}</strong>
+          <span className="muted">{tip}</span>
         </>
-      )}
-    </div>
+      ),
+    });
+  return (
+    <article className="card primary-kpi">
+      <div className="cardtop">
+        <div>
+          <p className="label">{label}</p>
+          <p className="value">{value}</p>
+          <p className="context">{context}</p>
+        </div>
+        <button
+          type="button"
+          className="kpi-info"
+          aria-label={`About ${label}`}
+          style={{ color }}
+          onPointerEnter={(e) => show(e.clientX, e.clientY)}
+          onPointerMove={(e) => show(e.clientX, e.clientY)}
+          onPointerLeave={() => setTooltip(null)}
+          onFocus={(e) => {
+            const box = e.currentTarget.getBoundingClientRect();
+            show(box.left, box.bottom);
+          }}
+          onBlur={() => setTooltip(null)}
+        >
+          <Icon name={icon} />
+        </button>
+      </div>
+      <PointerTooltip tooltip={tooltip} />
+    </article>
   );
 }
 
-export function BarChart({
+export function AnimatedBarChart({
   title,
   points,
-  valueLabel = "Value",
-  secondaryLabel,
+  valueLabel,
+  maximumFractionDigits,
 }: {
   title: string;
-  points: Point[];
-  valueLabel?: string;
-  secondaryLabel?: string;
+  points: InsightPoint[];
+  valueLabel: string;
+  maximumFractionDigits?: number;
 }) {
-  const shown = points.slice(-36);
-  const max = Math.max(...shown.flatMap((point) => [point.value, point.secondary ?? 0]), 1);
-  if (!shown.length) return <p className="muted py-8 text-sm">No data for the selected filters.</p>;
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; content: ReactNode } | null>(null);
+  const values = points.map((point) => point.value);
+  const rawMin = values.length ? Math.min(...values) : 0;
+  const rawMax = values.length ? Math.max(...values) : 1;
+  const spread = Math.max(1, rawMax - rawMin);
+  const min = Math.max(0, rawMin - spread * 0.12);
+  const max = rawMax + spread * 0.12;
+  const height = (value: number) =>
+    value <= 0 ? 0 : Math.max(4, ((value - min) / (max - min || 1)) * 92 + 4);
   return (
-    <div className="mt-5">
-      <div
-        className="flex h-64 items-end gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-4"
-        role="img"
-        aria-label={title}
-      >
-        {shown.map((point, index) => {
-          const delta = index ? point.value - shown[index - 1].value : 0;
-          return (
-            <div
-              key={point.label}
-              className="flex h-full min-w-0 flex-1 items-end gap-px"
-              title={`${point.label}: ${format(point.value)} ${valueLabel}${index ? ` (${delta >= 0 ? "+" : ""}${format(delta)} vs previous)` : ""}`}
-            >
-              <span
-                className="w-full rounded-t bg-[var(--primary)]"
-                style={{ height: `${Math.max((point.value / max) * 100, 2)}%` }}
-              />
-              {secondaryLabel && (
-                <span
-                  className="w-full rounded-t bg-[var(--cyan)]"
-                  style={{ height: `${Math.max(((point.secondary ?? 0) / max) * 100, 0)}%` }}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <div className="muted mt-2 flex justify-between text-xs">
-        <span>{shown[0].label}</span>
-        <span>
-          {format(max)} {valueLabel}
-        </span>
-        <span>{shown.at(-1)?.label}</span>
-      </div>
-      <table className="sr-only">
-        <caption>{title}</caption>
-        <thead>
-          <tr>
-            <th>Period</th>
-            <th>{valueLabel}</th>
-            {secondaryLabel && <th>{secondaryLabel}</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {shown.map((point) => (
-            <tr key={point.label}>
-              <td>{point.label}</td>
-              <td>{point.value}</td>
-              {secondaryLabel && <td>{point.secondary}</td>}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="chart">
+      <h3>{title}</h3>
+      {points.length ? (
+        <>
+          <div className="bars" role="img" aria-label={title}>
+            {points.map((point, index) => {
+              const h = height(point.value);
+              return (
+                <div
+                  key={`${point.label}-${index}`}
+                  className="barpair"
+                  onPointerMove={(e) =>
+                    setTooltip({
+                      x: e.clientX,
+                      y: e.clientY,
+                      content: (
+                        <>
+                          <strong>{point.label}</strong>
+                          <span className="muted">
+                            {format(point.value, maximumFractionDigits)} {valueLabel}
+                          </span>
+                        </>
+                      ),
+                    })
+                  }
+                  onPointerLeave={() => setTooltip(null)}
+                >
+                  <span className="barcol" style={{ "--h": `${h}%` } as CSSProperties}>
+                    {point.value > 0 && (
+                      <>
+                        <span className="barlabel">
+                          {format(point.value, maximumFractionDigits)}
+                        </span>
+                        <i
+                          className="bar"
+                          style={{
+                            height: `${h}%`,
+                            animationDelay: `${Math.min(index * 12, 180)}ms`,
+                          }}
+                        />
+                      </>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div
+            className="xaxis"
+            style={{ gridTemplateColumns: `repeat(${points.length},minmax(0,1fr))` }}
+          >
+            {points.map((point, i) => (
+              <span className="xtick" key={i}>
+                {point.axisLabel}
+              </span>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="chart-empty">No data for the selected filters.</div>
+      )}
+      <span className="sr-only">
+        Scale {format(min)} to {format(max)} {valueLabel}.
+      </span>
+      <PointerTooltip tooltip={tooltip} />
     </div>
   );
 }
 
-export function DonutChart({
+export function AnimatedAreaLineChart({
+  title,
+  points,
+  valueLabel,
+}: {
+  title: string;
+  points: InsightPoint[];
+  valueLabel: string;
+}) {
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; content: ReactNode } | null>(null);
+  const gradientId = useId().replace(/:/g, "");
+  const values = points.map((point) => point.value);
+  const rawMin = values.length ? Math.min(...values) : 0,
+    rawMax = values.length ? Math.max(...values) : 1,
+    spread = Math.max(1, rawMax - rawMin),
+    min = Math.max(0, rawMin - spread * 0.12),
+    max = rawMax + spread * 0.12;
+  const x = (i: number) => 18 + 892 * (i / Math.max(1, points.length - 1));
+  const y = (value: number) => 18 + 184 * (1 - (value - min) / (max - min || 1));
+  const coords = points.map((point, i) => [x(i), y(point.value)] as const);
+  const line = coords.map(([cx, cy], i) => `${i ? "L" : "M"}${cx} ${cy}`).join(" ");
+  const area = coords.length ? `${line} L${coords.at(-1)![0]} 202 L${coords[0][0]} 202 Z` : "";
+  const end = coords.at(-1);
+  return (
+    <div className="chart linechart">
+      <h3>{title}</h3>
+      {points.length && end ? (
+        <>
+          <div
+            className="lineplot"
+            onPointerMove={(e) => {
+              const box = e.currentTarget.getBoundingClientRect();
+              const index = Math.round(
+                Math.max(0, Math.min(1, (e.clientX - box.left) / box.width)) * (points.length - 1),
+              );
+              const point = points[index];
+              setTooltip({
+                x: e.clientX,
+                y: e.clientY,
+                content: (
+                  <>
+                    <strong>{point.label}</strong>
+                    <span className="muted">
+                      {format(point.value)} {valueLabel}
+                    </span>
+                  </>
+                ),
+              });
+            }}
+            onPointerLeave={() => setTooltip(null)}
+          >
+            <svg viewBox="0 0 1000 220" preserveAspectRatio="none" role="img" aria-label={title}>
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor="var(--primary)" stopOpacity=".58" />
+                  <stop offset="1" stopColor="#000" stopOpacity=".08" />
+                </linearGradient>
+              </defs>
+              <path d={area} fill={`url(#${gradientId})`} className="line-area" />
+              <path d={line} pathLength="1000" className="line-stroke" />
+              <circle cx={end[0]} cy={end[1]} r="5" fill="var(--primary)" />
+            </svg>
+            <span
+              className="line-end-html"
+              style={{ left: `${end[0] / 10}%`, top: `${end[1] / 2.2}%` }}
+            >
+              {format(points.at(-1)!.value)}
+            </span>
+          </div>
+          <div
+            className="xaxis"
+            style={{ gridTemplateColumns: `repeat(${points.length},minmax(0,1fr))` }}
+          >
+            {points.map((point, i) => (
+              <span className="xtick" key={i}>
+                {point.axisLabel}
+              </span>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="chart-empty">No data for the selected filters.</div>
+      )}
+      <PointerTooltip tooltip={tooltip} />
+    </div>
+  );
+}
+
+export function AnimatedDonutChart({
   title,
   rows,
 }: {
   title: string;
   rows: Array<{ label: string; value: number; color: string }>;
 }) {
-  const total = rows.reduce((sum, row) => sum + row.value, 0) || 1;
+  const total = rows.reduce((sum, row) => sum + row.value, 0);
+  const stops = rows
+    .map((row, index) => {
+      const start = total
+        ? (rows.slice(0, index).reduce((sum, item) => sum + item.value, 0) / total) * 100
+        : 0;
+      const end = total ? start + (row.value / total) * 100 : 0;
+      return `${row.color} ${start}% ${end}%`;
+    })
+    .join(",");
   return (
-    <div className="mt-5 flex flex-wrap items-center gap-6">
-      <svg viewBox="0 0 42 42" className="size-40 -rotate-90" role="img" aria-label={title}>
-        {rows.map((row, index) => {
-          const dash = (row.value / total) * 100;
-          const offset = rows
-            .slice(0, index)
-            .reduce((sum, item) => sum + (item.value / total) * 100, 0);
-          const part = (
-            <circle
-              key={row.label}
-              cx="21"
-              cy="21"
-              r="15.9155"
-              fill="transparent"
-              stroke={row.color}
-              strokeWidth="6"
-              strokeDasharray={`${dash} ${100 - dash}`}
-              strokeDashoffset={-offset}
-            >
-              <title>{`${row.label}: ${format(row.value)} (${Math.round((row.value / total) * 100)}%)`}</title>
-            </circle>
-          );
-          return part;
-        })}
-        <text
-          x="21"
-          y="21"
-          textAnchor="middle"
-          dominantBaseline="central"
-          transform="rotate(90 21 21)"
-          className="fill-[var(--text)] text-[6px] font-bold"
-        >
-          {format(total)}
-        </text>
-      </svg>
-      <ul className="min-w-44 flex-1 space-y-2 text-sm">
-        {rows.map((row) => (
-          <li key={row.label} className="flex items-center justify-between gap-3">
-            <span>
-              <i
-                className="mr-2 inline-block size-2.5 rounded-full"
-                style={{ background: row.color }}
-              />
-              {row.label}
-            </span>
-            <strong>{format(row.value)}</strong>
-          </li>
-        ))}
-      </ul>
+    <div className="chart">
+      <h3>{title}</h3>
+      {total ? (
+        <div className="donutwrap">
+          <div className="donut" style={{ background: `conic-gradient(${stops})` }}>
+            <span>{format(total)}</span>
+          </div>
+          <ul className="legend">
+            {rows.map((row) => (
+              <li key={row.label}>
+                <span>
+                  <i style={{ background: row.color }} />
+                  {row.label}
+                </span>
+                <b>{format(row.value)}</b>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="chart-empty compact">No data for the selected filters.</div>
+      )}
     </div>
   );
 }
 
-export function RankedBars({
-  rows,
-  empty = "No data for the selected filters.",
-}: {
-  rows: Array<{ label: string; value: number; detail?: string }>;
-  empty?: string;
-}) {
-  const max = Math.max(...rows.map((row) => row.value), 1);
-  if (!rows.length) return <p className="muted py-8 text-sm">{empty}</p>;
+export function RankedBars({ rows }: { rows: Array<{ label: string; value: number }> }) {
+  const max = Math.max(1, ...rows.map((row) => row.value));
+  if (!rows.length)
+    return <div className="chart-empty compact">No data for the selected filters.</div>;
   return (
-    <div className="mt-5 space-y-4">
+    <div className="ranks">
       {rows.slice(0, 10).map((row) => (
-        <div key={row.label}>
-          <div className="mb-1 flex justify-between gap-3 text-sm">
-            <span className="truncate font-semibold" title={row.label}>
-              {row.label}
-            </span>
-            <strong>{format(row.value)}</strong>
+        <div className="rank" key={row.label}>
+          <div className="rankline">
+            <span title={row.label}>{row.label}</span>
+            <b>{format(row.value)}</b>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-muted)]">
-            <div
-              className="h-full rounded-full bg-[linear-gradient(90deg,var(--primary),var(--cyan))]"
-              style={{ width: `${Math.max((row.value / max) * 100, 2)}%` }}
-            />
+          <div className="track">
+            <i className="fill" style={{ width: `${Math.max(2, (row.value / max) * 100)}%` }} />
           </div>
-          {row.detail && <p className="muted mt-1 text-xs">{row.detail}</p>}
         </div>
       ))}
     </div>

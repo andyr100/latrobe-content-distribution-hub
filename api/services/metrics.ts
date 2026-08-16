@@ -8,7 +8,7 @@ export type MetricRange = (typeof metricRanges)[number];
 export type MetricFilters = {
   range: MetricRange;
   feedId?: string;
-  clientId?: string;
+  clientType?: string;
 };
 
 function sinceFor(range: MetricRange) {
@@ -34,9 +34,9 @@ function requestFilter(filters: MetricFilters, alias = "r") {
     clauses.push(`${alias}.feedId = :feedId`);
     replacements.feedId = filters.feedId;
   }
-  if (filters.clientId) {
-    clauses.push(`${alias}.clientId = :clientId`);
-    replacements.clientId = filters.clientId;
+  if (filters.clientType) {
+    clauses.push(`${alias}.clientType = :clientType`);
+    replacements.clientType = filters.clientType;
   }
   return {
     where: clauses.length ? `WHERE ${clauses.join(" AND ")}` : "",
@@ -58,7 +58,7 @@ export async function getMetricSummary(filters: MetricFilters) {
   const [row] = await sequelize.query<SummaryRow>(
     `SELECT
       COUNT(*) AS totalRequests,
-      COUNT(DISTINCT clientId) AS uniqueClients,
+      COUNT(DISTINCT clientType) AS uniqueClients,
       SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS failedRequests,
       SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) AS successfulRequests,
       ROUND(AVG(durationMs), 1) AS averageLatencyMs
@@ -132,8 +132,7 @@ export async function getRequestsByFeed(filters: MetricFilters, limit = 20) {
 }
 
 export type RequestsByClientRow = {
-  clientId: string;
-  source: string;
+  clientType: string;
   totalRequests: number;
   successfulRequests: number;
   failedRequests: number;
@@ -144,8 +143,7 @@ export type RequestsByClientRow = {
 export async function getRequestsByClient(filters: MetricFilters, limit = 20) {
   const filter = requestFilter(filters, "r");
   return sequelize.query<RequestsByClientRow>(
-    `SELECT r.clientId,
-      COALESCE(MAX(r.source), 'direct') AS source,
+    `SELECT r.clientType,
       COUNT(*) AS totalRequests,
       SUM(CASE WHEN r.success = 1 THEN 1 ELSE 0 END) AS successfulRequests,
       SUM(CASE WHEN r.success = 0 THEN 1 ELSE 0 END) AS failedRequests,
@@ -153,8 +151,8 @@ export async function getRequestsByClient(filters: MetricFilters, limit = 20) {
       MAX(r.requestedAt) AS lastRequestedAt
      FROM RequestLogs r
      ${filter.where}
-     GROUP BY r.clientId
-     ORDER BY totalRequests DESC, r.clientId ASC
+     GROUP BY r.clientType
+     ORDER BY totalRequests DESC, r.clientType ASC
      LIMIT :limit`,
     {
       replacements: { ...filter.replacements, limit: Math.min(Math.max(limit, 1), 100) },
@@ -234,8 +232,8 @@ export async function getAlerts(options: { resolved?: boolean; limit?: number } 
 export async function getRecentRequests(filters: MetricFilters, limit = 20) {
   const filter = requestFilter(filters, "r");
   return sequelize.query(
-    `SELECT r.id, r.clientId, r.feedId, COALESCE(f.code, 'COMBINED') AS feedCode,
-      r.endpoint, r.statusCode, r.success, r.durationMs, r.source, r.requestedAt
+    `SELECT r.id, r.clientId, r.clientType, r.feedId, COALESCE(f.code, 'COMBINED') AS feedCode,
+      r.endpoint, r.statusCode, r.success, r.durationMs, r.requestedAt
      FROM RequestLogs r
      LEFT JOIN Feeds f ON f.id = r.feedId
      ${filter.where}

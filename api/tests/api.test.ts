@@ -30,6 +30,7 @@ let feedStatusRoute: typeof import("../app/api/feed-status/route");
 let alertsRoute: typeof import("../app/api/alerts/route");
 let insightOverviewRoute: typeof import("../app/api/insights/overview/route");
 let insightLogsRoute: typeof import("../app/api/insights/request-logs/route");
+let insightHealthRoute: typeof import("../app/api/insights/health-refresh/route");
 let database: typeof import("../lib/sequelize");
 let models: typeof import("../models");
 let postService: typeof import("../services/posts");
@@ -56,6 +57,7 @@ before(async () => {
   alertsRoute = await import("../app/api/alerts/route");
   insightOverviewRoute = await import("../app/api/insights/overview/route");
   insightLogsRoute = await import("../app/api/insights/request-logs/route");
+  insightHealthRoute = await import("../app/api/insights/health-refresh/route");
   database = await import("../lib/sequelize");
   models = await import("../models");
   postService = await import("../services/posts");
@@ -81,6 +83,8 @@ test("fresh migration creates and seeds the explicit feed schema", async () => {
   assert(tables.has("FeedStatusEvents"));
   assert(tables.has("Alerts"));
   assert(tables.has("RssUsers"));
+  const requestColumns = await database.sequelize.getQueryInterface().describeTable("RequestLogs");
+  assert("clientType" in requestColumns);
   assert(!tables.has("Topics"));
   assert(!tables.has("PostTopics"));
   const columns = await database.sequelize.getQueryInterface().describeTable("Posts");
@@ -213,7 +217,9 @@ test("a relationship failure rolls back a post created inside a transaction", as
 test("RSS output is valid, escaped, limited, channel-scoped and counted", async () => {
   const before = await models.RequestCounter.findOne({ where: { key: "rss-client-requests" } });
   const combined = await rssRoute.GET(
-    new Request("http://test/rss", { headers: { "X-Client-Id": "api-test-client" } }),
+    new Request("http://test/rss", {
+      headers: { "X-Client-Id": "api-test-client", "X-Client-Source": "browser" },
+    }),
   );
   const combinedXml = await combined.text();
   assert.equal(combined.status, 200);
@@ -246,6 +252,10 @@ test("RSS output is valid, escaped, limited, channel-scoped and counted", async 
   assert.equal(
     (await models.RequestLog.findOne({ where: { rssUserId: "ava-nguyen" } }))?.rssUserId,
     "ava-nguyen",
+  );
+  assert.equal(
+    (await models.RequestLog.findOne({ where: { clientId: "api-test-client" } }))?.clientType,
+    "browser",
   );
 });
 
@@ -293,12 +303,12 @@ test("Assessment 3 metrics aggregate persisted RSS operations", async () => {
   );
   assert(byFeed.data.some((row) => row.code === "HACKATHONS" && row.totalRequests === 1));
 
-  const byClient = await json<Array<{ clientId: string; totalRequests: number }>>(
+  const byClient = await json<Array<{ clientType: string; totalRequests: number }>>(
     await requestsByClientRoute.GET(
       new Request("http://test/api/metrics/requests-by-client?range=all"),
     ),
   );
-  assert(byClient.data.some((row) => row.clientId === "api-test-client"));
+  assert(byClient.data.some((row) => row.clientType === "browser"));
 
   const activity = await json<Array<{ totalRequests: number }>>(
     await requestsOverTimeRoute.GET(
@@ -355,6 +365,16 @@ test("Hub Intelligence aggregates filters and paginates request evidence", async
     new Request("http://test/api/insights/request-logs?range=all&pageSize=50"),
   );
   assert.equal(invalid.status, 400);
+});
+
+test("Hub Intelligence health refresh performs and persists a real check for every feed", async () => {
+  const beforeRequests = await models.RequestLog.count();
+  const response = await insightHealthRoute.POST();
+  const result = await json<Array<{ status: string; message: string | null }>>(response);
+  assert.equal(response.status, 200);
+  assert.equal(result.data.length, 8);
+  assert(result.data.every((row) => row.status !== "UNKNOWN" && Boolean(row.message)));
+  assert.equal(await models.RequestLog.count(), beforeRequests);
 });
 
 test("delete removes the post and its join rows", async () => {

@@ -16,35 +16,35 @@ export default defineConfig({
   webServer: [
     {
       command: "npm --prefix api run dev",
-      url: "http://localhost:4000/health",
-      reuseExistingServer: !process.env.CI,
+      url: "http://127.0.0.1:4000/health",
+      reuseExistingServer: false,
       timeout: 120_000,
       env: {
         ...process.env,
         DATABASE_STORAGE: "./tests/.playwright.sqlite",
-        APP_BASE_URL: "http://localhost:4000",
+        APP_BASE_URL: "http://127.0.0.1:4000",
         FRONTEND_BASE_URL: "http://localhost:3000",
       },
     },
     {
       command: "npm --prefix rss-client run dev",
       url: "http://localhost:5000",
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 120_000,
       env: {
         ...process.env,
-        API_BASE_URL: "http://localhost:4000",
+        API_BASE_URL: "http://127.0.0.1:4000",
         NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED: "false",
       },
     },
     {
       command: "npm --prefix frontend run dev",
       url: "http://localhost:3000",
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       timeout: 120_000,
       env: {
         ...process.env,
-        NEXT_PUBLIC_API_BASE_URL: "http://localhost:4000",
+        NEXT_PUBLIC_API_BASE_URL: "http://127.0.0.1:4000",
       },
     },
   ],

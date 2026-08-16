@@ -7,13 +7,17 @@ export function parseMetricFilters(request: Request): MetricFilters {
     throw new RangeError(`Range must be one of: ${metricRanges.join(", ")}`);
   }
   const feedId = search.get("feedId")?.trim();
-  const clientId = search.get("clientId")?.trim();
+  const clientType = search.get("clientType")?.trim();
   if (feedId && feedId.length > 100) throw new RangeError("feedId is too long");
-  if (clientId && clientId.length > 100) throw new RangeError("clientId is too long");
+  if (
+    clientType &&
+    !["browser", "mobile_app", "rss_reader", "jmeter", "direct"].includes(clientType)
+  )
+    throw new RangeError("clientType is invalid");
   return {
     range: requestedRange as MetricRange,
     ...(feedId ? { feedId } : {}),
-    ...(clientId ? { clientId } : {}),
+    ...(clientType ? { clientType } : {}),
   };
 }
 

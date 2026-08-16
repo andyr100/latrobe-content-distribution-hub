@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const apiBase = "http://localhost:4000";
+const apiBase = "http://127.0.0.1:4000";
 
 test("RSS server post can be created, read, updated and deleted", async ({ request }) => {
   const marker = `playwright-server-${Date.now()}`;

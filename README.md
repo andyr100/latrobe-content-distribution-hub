@@ -89,18 +89,18 @@ The API automatically migrates and seeds its local SQLite database. The same URL
 
 ## Dashboard and Hub Intelligence
 
-The publishing-first Dashboard keeps post creation and Channel distribution central. **Hub Intelligence** at `/hubintelligence` is the premium analytics cockpit: automatically applying time, author, RSS student, Channel, result and source slicers; responsive chart buckets; contextual tooltips; live 30-second refresh; collapsible insight panels; and server-paginated request evidence with 20/100/500/1000-row pages. `/reports` redirects to the new URL for compatibility.
+The publishing-first Dashboard keeps post creation and Channel distribution central. **Hub Intelligence** at `/hubintelligence` is the premium analytics cockpit: applying time, author, logged-in RSS user, Channel, result and normalized RSS-client slicers to live persisted data; performing real feed-health sweeps on load and Refresh; rendering responsive animated charts; and presenting server-paginated request evidence with 20/100/500/1000-row pages. `/reports` redirects to the new URL for compatibility.
 
 Metrics are derived from persisted records, not hard-coded totals. RSS responses remain available if metrics logging fails. `/count` remains a backwards-compatible count of successful RSS requests.
 
-The RSS Client creates `latrobe-rss-client.id.v1` in local storage and sends its stable value through `X-Client-Id`; `X-Client-Source` identifies the caller type. Requests without an ID receive a safe anonymous fallback.
+The RSS Client creates `latrobe-rss-client.id.v1` in local storage and sends its stable technical value through `X-Client-Id`. `X-Rss-User-Id` identifies the logged-in person viewing the feed, while `X-Client-Source` is normalized into the access method: Browser, Mobile app, RSS reader, JMeter or Direct. Requests without an ID receive a safe anonymous fallback.
 
 ### Operational schema and metric definitions
 
-- `RssUser` stores six seeded student viewers separately from publishing authors. `RequestLog` stores browser client ID, selected RSS user, feed identity, endpoint, method, HTTP status, success, duration, request time, source, and user agent. Indexes cover time, client, RSS user, feed, and success queries.
+- `RssUser` stores student viewer identities separately from publishing authors. `RequestLog` stores technical client ID, normalized RSS client method, selected logged-in RSS user, feed identity, endpoint, method, HTTP status, success, duration, request time and user agent. Indexes cover time, RSS client, RSS user and feed queries.
 - `FeedStatusEvent` records each feed observation as `HEALTHY`, `EMPTY`, `WARNING`, or `ERROR`, including item count, HTTP status, latency, and message.
 - `Alert` stores an unusual state, severity, feed, message, and resolved timestamps. Repeated matching failures reuse an unresolved alert instead of producing noise.
-- Total requests count logs in the selected range; unique clients count distinct client IDs; feed count comes from the feed table; success rate is successful requests divided by total requests; average latency is the mean recorded duration; unresolved alerts count alert records whose resolved flag is false.
+- Total requests count logs in the selected range; active RSS clients count distinct normalized access methods; feed count comes from the feed table; success rate is successful requests divided by total requests; average latency is the mean recorded duration; unresolved alerts count alert records whose resolved flag is false.
 - A successful feed with items is healthy, a successful feed with no items is empty, 4xx responses are warnings, and 5xx/unexpected failures are errors. Failed RSS checks create a warning/error alert that can be resolved in Hub Intelligence.
 
 ## Operational API
@@ -152,12 +152,27 @@ powershell -ExecutionPolicy Bypass -File scripts/run-lighthouse.ps1 -Label befor
 powershell -ExecutionPolicy Bypass -File scripts/run-lighthouse.ps1 -Label after
 ```
 
-- `verify` checks formatting, lint, 8 isolated API/RSS tests, and all production builds.
-- Playwright uses an isolated SQLite database and starts its own applications. See [docs/testing/PLAYWRIGHT.md](docs/testing/PLAYWRIGHT.md).
-- JMeter requires Java 17+ and Apache JMeter 5.6.3 on `PATH`. Its staged 1/10/100/1000/10000-user runner is `powershell -ExecutionPolicy Bypass -File tests/jmeter/run-stages.ps1`; parameters can override host, port, feed, and loops. The evidence procedure is in [docs/testing/JMETER.md](docs/testing/JMETER.md). High stages are deliberately opt-in and should run only on an appropriately sized environment.
+- `verify` checks formatting, lint, 10 isolated API/RSS tests, and all production builds.
+- Playwright uses an isolated SQLite database and starts its own applications. Because the suite now refuses to reuse normal development services, stop the three application containers before running it and restart them afterwards. See [docs/testing/PLAYWRIGHT.md](docs/testing/PLAYWRIGHT.md).
+- JMeter requires Java 17+ and Apache JMeter 5.6.3 on `PATH`. Its staged 1/10/100/1000/10000-user runner is `powershell -ExecutionPolicy Bypass -File tests/jmeter/run-stages.ps1`; parameters can override host, port, feed, loops, and a repeat-run output label. The evidence procedure is in [docs/testing/JMETER.md](docs/testing/JMETER.md).
 - Lighthouse JSON/HTML reports are generated under ignored `docs/testing/results/`; the procedure is in [docs/testing/LIGHTHOUSE.md](docs/testing/LIGHTHOUSE.md).
 
 Do not claim an unexecuted JMeter stage or Lighthouse result. Keep the raw generated evidence outside Git as configured by `.gitignore`.
+
+### Verified assessment evidence — 16 August 2026
+
+- Playwright: **3/3 passed in 22.9 seconds**, covering the server CRUD/RSS journey, separate RSS Client/mock LMS journey, and Hub Intelligence reporting journey.
+- JMeter: all required x1, x10, x100, x1,000 and x10,000 stages were executed. x1 through x1,000 had **0% errors**. The x10,000 local stage saturated the single API/SQLite instance: **9,971/10,000 errors (99.71%)**, predominantly 30-second timeouts. The API became unhealthy and recovered to `200 OK` about six seconds after an API-only container restart; the database volume was retained.
+- Lighthouse: Dashboard accessibility improved from **96 to 100** after correcting primary-link contrast; the RSS Client remained **100 before and after**.
+- Rubric estimate: **22/25 (88%)** before EC2 deployment, the final video, clean-branch packaging, and correction of the current client metric semantics. The current queries count access methods (`clientType`) where the rubric asks for distinct technical clients (`clientId`).
+
+Open the combined, video-ready evidence page with:
+
+```powershell
+Start-Process .\docs\testing\ASSESSMENT_TEST_EVIDENCE.html
+```
+
+Raw Playwright and JMeter reports are intentionally ignored by Git but remain available locally at `playwright-report/index.html` and `tests/jmeter/results/*-users-report/index.html`. The combined HTML retains the measured summary, objective rubric breakdown, limitations, commands, and ten priority improvements.
 
 Accessibility remains part of the shared UI design: semantic headings and tables, labelled controls and status text, keyboard-visible focus, modal focus management, reduced-motion support, responsive layouts, and chart data available without relying on colour or graphics alone.
 
@@ -171,7 +186,7 @@ Jaeger is at http://localhost:16686 and Prometheus at http://localhost:9090. Thi
 
 ## EC2 deployment
 
-Keep developing and verifying locally first. When the final commit passes, copy `ec2.env.example` to `ec2.env`, replace the placeholder host, and deploy:
+**Current status: pending by design.** Local implementation and evidence are being completed first. When the final commit passes, copy `ec2.env.example` to `ec2.env`, replace the placeholder host, and deploy:
 
 ```powershell
 docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.override.yml up --build -d

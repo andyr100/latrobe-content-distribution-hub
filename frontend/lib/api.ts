@@ -14,6 +14,7 @@ import type {
   InsightLogMeta,
   RequestsByClientDto,
   RequestsByFeedDto,
+  RssClientTypeDto,
 } from "@latrobe/api-contract";
 import type { Channel, DashboardStats, InternalPost, MockUser } from "@/types";
 
@@ -173,6 +174,8 @@ export type OperationsSnapshot = Awaited<ReturnType<typeof getOperationsSnapshot
 export type HubOverview = {
   range: MetricRangeDto;
   generatedAt: string;
+  timezone: string;
+  serviceStatus: "online" | "degraded" | "offline";
   summary: {
     totalRequests: number;
     successfulRequests: number;
@@ -180,11 +183,15 @@ export type HubOverview = {
     averageLatencyMs: number;
     activeClients: number;
     activeRssUsers: number;
-    successRate: number;
+    successRate: number | null;
+    errorRate: number | null;
+    requestsPerRssUser: number | null;
     p95LatencyMs: number;
     publishingAuthors: number;
     publishedPosts: number;
     healthyFeeds: number;
+    warningFeeds: number;
+    errorFeeds: number;
     totalFeeds: number;
     unresolvedAlerts: number;
   };
@@ -199,7 +206,7 @@ export type HubOverview = {
   feedDemand: Array<{ code: string; title: string; value: number }>;
   clientActivity: Array<{ bucket: string; activeClients: number }>;
   rssUserActivity: Array<{ bucket: string; activeRssUsers: number }>;
-  sourceDistribution: Array<{ label: string; value: number }>;
+  clientDistribution: Array<{ label: RssClientTypeDto; value: number }>;
   failedByFeed: Array<{ label: string; value: number }>;
   rssUserDemand: Array<{ label: string; value: number }>;
   postChannels: Array<{ label: string; value: number }>;
@@ -213,7 +220,7 @@ export type HubFilterOptions = {
   authors: Array<{ id: string; name: string; role: string }>;
   rssUsers: Array<{ id: string; name: string; role: string }>;
   feeds: Array<{ id: string; code: string; title: string }>;
-  sources: string[];
+  clientTypes: RssClientTypeDto[];
   ranges: MetricRangeDto[];
 };
 
@@ -229,6 +236,9 @@ export function getHubFilterOptions() {
 }
 export function getHubOverview(filters: InsightFiltersDto) {
   return apiRequest<HubOverview>(`/api/insights/overview?${insightQuery(filters)}`);
+}
+export function refreshHubFeedHealth() {
+  return apiRequest<FeedStatusDto[]>("/api/insights/health-refresh", { method: "POST" });
 }
 export function getHubRequestLogs(
   filters: InsightFiltersDto,

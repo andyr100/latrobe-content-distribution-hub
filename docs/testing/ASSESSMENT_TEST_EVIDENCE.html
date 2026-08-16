@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Assessment 3 verification evidence — 16 August 2026</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f5f6fb;
+        --card: #fff;
+        --text: #17182b;
+        --muted: #5f6578;
+        --line: #dfe2ec;
+        --primary: #5b4be1;
+        --good: #087a55;
+        --warn: #9a5b00;
+        --bad: #bd2947;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #11131b;
+          --card: #1b1e29;
+          --text: #f5f6ff;
+          --muted: #aeb4c8;
+          --line: #343949;
+          --primary: #a99cff;
+          --good: #55d6a2;
+          --warn: #ffc266;
+          --bad: #ff7891;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.55 system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 40px auto 80px;
+      }
+      h1 {
+        margin: 0.2rem 0;
+        font-size: clamp(2rem, 5vw, 3.4rem);
+        line-height: 1.05;
+      }
+      h2 {
+        margin: 0 0 16px;
+        font-size: 1.35rem;
+      }
+      h3 {
+        margin: 24px 0 8px;
+      }
+      p {
+        margin: 8px 0;
+      }
+      a {
+        color: var(--primary);
+        font-weight: 700;
+      }
+      .eyebrow {
+        color: var(--primary);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+      }
+      .lede,
+      .muted {
+        color: var(--muted);
+      }
+      .lede {
+        max-width: 850px;
+        font-size: 1.05rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin: 24px 0;
+      }
+      .card {
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--card);
+        box-shadow: 0 12px 30px rgb(20 25 45 / 6%);
+      }
+      .metric {
+        display: block;
+        margin: 7px 0;
+        font-size: 2rem;
+        font-weight: 850;
+      }
+      .good {
+        color: var(--good);
+      }
+      .warn {
+        color: var(--warn);
+      }
+      .bad {
+        color: var(--bad);
+      }
+      .section {
+        margin-top: 22px;
+      }
+      .scroll {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 11px 12px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        white-space: nowrap;
+      }
+      th {
+        color: var(--muted);
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      pre {
+        overflow: auto;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--bg);
+        color: var(--text);
+      }
+      code {
+        font-family: "Cascadia Code", Consolas, monospace;
+      }
+      li {
+        margin: 7px 0;
+      }
+      .pill {
+        display: inline-block;
+        margin: 4px 6px 4px 0;
+        padding: 5px 9px;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 750;
+      }
+      footer {
+        margin-top: 28px;
+        color: var(--muted);
+      }
+      @media (max-width: 800px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        main {
+          margin-top: 24px;
+        }
+      }
+      @media print {
+        body {
+          background: #fff;
+          color: #111;
+        }
+        main {
+          width: 100%;
+          margin: 0;
+        }
+        .card {
+          box-shadow: none;
+          break-inside: avoid;
+        }
+        pre {
+          white-space: pre-wrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">CSE5006 · Assessment 3 · measured evidence</div>
+      <h1>Playwright and JMeter verification</h1>
+      <p class="lede">
+        Executed locally on 16 August 2026 (AEST). Results below are measured, not projected. EC2
+        deployment and the final 3–8 minute video remain pending.
+      </p>
+
+      <div class="grid">
+        <article class="card">
+          <span class="eyebrow">Playwright</span><strong class="metric good">3 / 3 passed</strong
+          ><span>Chromium · 22.9 seconds</span>
+        </article>
+        <article class="card">
+          <span class="eyebrow">JMeter stages</span><strong class="metric good">5 / 5 run</strong
+          ><span>x1 through x10,000 retained</span>
+        </article>
+        <article class="card">
+          <span class="eyebrow">Rubric estimate</span><strong class="metric">22 / 25</strong
+          ><span>88% before EC2/video completion</span>
+        </article>
+      </div>
+
+      <section class="card section">
+        <h2>Objective rubric score</h2>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Criterion</th>
+                <th>Score</th>
+                <th>Evidence and deduction</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Dashboard and reporting</td>
+                <td><strong>6 / 7</strong></td>
+                <td>
+                  Polished database-driven Hub Intelligence, filters, charts, alerts and request
+                  log. One mark held because “per client” currently means access method, not
+                  technical client ID.
+                </td>
+              </tr>
+              <tr>
+                <td>Database persistence and ORM</td>
+                <td><strong>5 / 5</strong></td>
+                <td>
+                  Sequelize/SQLite models, relationships, migrations and persisted posts, feeds,
+                  users, request logs, status events and alerts.
+                </td>
+              </tr>
+              <tr>
+                <td>Observability and metrics</td>
+                <td><strong>3 / 4</strong></td>
+                <td>
+                  Health, totals, feed demand, status, latency and alerts are visible. Distinct
+                  client counting currently groups by <code>clientType</code> instead of
+                  <code>clientId</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>Testing and accessibility</td>
+                <td><strong>5 / 5</strong></td>
+                <td>
+                  Server/client Playwright tests pass; every required JMeter level was executed;
+                  Lighthouse before/after evidence shows dashboard 96→100 and RSS Client 100→100.
+                </td>
+              </tr>
+              <tr>
+                <td>Code, modularity and GitHub</td>
+                <td><strong>3 / 4</strong></td>
+                <td>
+                  Strong modular structure, CI, real branches and meaningful history. The current
+                  main worktree is not clean; local dependency/build folders must be excluded from
+                  the final ZIP.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          <strong>Total: 22 / 25 (88%).</strong> This is an evidence-based estimate, not an official
+          grade. Submission is not complete until EC2, the required video, a clean final commit and
+          ZIP packaging are finished.
+        </p>
+      </section>
+
+      <section class="card section">
+        <h2>Playwright result</h2>
+        <span class="pill good">PASS</span><span class="pill">Chromium</span
+        ><span class="pill">isolated SQLite</span>
+        <ol>
+          <li>
+            <strong>Client:</strong> creates a known post, selects CLOUDDEVOPS in the separate mock
+            LMS, and verifies the RSS item is visible.
+          </li>
+          <li>
+            <strong>Hub Intelligence:</strong> verifies live metrics, filters, charts, pagination
+            and collapsible evidence.
+          </li>
+          <li>
+            <strong>Server:</strong> creates, reads, updates, publishes, deletes and confirms
+            deletion of a unique RSS post.
+          </li>
+        </ol>
+        <p>
+          The original run exposed an IPv6 <code>localhost</code> issue. API test URLs were
+          corrected to <code>127.0.0.1</code>, browser URLs remain <code>localhost</code> for
+          Next.js development-origin compatibility, and the verified rerun passed 3/3.
+        </p>
+        <p><a href="../../playwright-report/index.html">Open the full Playwright HTML report</a></p>
+      </section>
+
+      <section class="card section">
+        <h2>JMeter staged result</h2>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Virtual clients</th>
+                <th>Samples</th>
+                <th>Average</th>
+                <th>Median</th>
+                <th>P90</th>
+                <th>P95</th>
+                <th>Throughput</th>
+                <th>Errors</th>
+                <th>Maximum</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>1</td>
+                <td>79.00 ms</td>
+                <td>79.00 ms</td>
+                <td>79.00 ms</td>
+                <td>79.00 ms</td>
+                <td>12.66/s</td>
+                <td class="good">0 (0.00%)</td>
+                <td>79 ms</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>10</td>
+                <td>41.10 ms</td>
+                <td>40.50 ms</td>
+                <td>56.40 ms</td>
+                <td>58.00 ms</td>
+                <td>2.24/s</td>
+                <td class="good">0 (0.00%)</td>
+                <td>58 ms</td>
+              </tr>
+              <tr>
+                <td>100</td>
+                <td>100</td>
+                <td>40.32 ms</td>
+                <td>39.00 ms</td>
+                <td>51.90 ms</td>
+                <td>61.75 ms</td>
+                <td>3.37/s</td>
+                <td class="good">0 (0.00%)</td>
+                <td>77 ms</td>
+              </tr>
+              <tr>
+                <td>1,000</td>
+                <td>1,000</td>
+                <td>34.77 ms</td>
+                <td>34.00 ms</td>
+                <td>36.00 ms</td>
+                <td>37.00 ms</td>
+                <td>8.35/s</td>
+                <td class="good">0 (0.00%)</td>
+                <td>217 ms</td>
+              </tr>
+              <tr>
+                <td>10,000</td>
+                <td>10,000</td>
+                <td>29,959.97 ms</td>
+                <td>30,003.00 ms</td>
+                <td>30,004.00 ms</td>
+                <td>30,009.00 ms</td>
+                <td>15.88/s</td>
+                <td class="bad">9,971 (99.71%)</td>
+                <td>30,029 ms</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Interpretation</h3>
+        <p>
+          x1–x1,000 completed with no errors. At x10,000 the local single-instance Next.js/SQLite
+          API saturated: about 501 requests remained active, nearly all samples hit the configured
+          30-second timeout, and the API health check stopped responding. Restarting only the API
+          container restored <code>200 OK</code>, database connectivity and all eight feeds in
+          approximately six seconds without deleting the volume.
+        </p>
+        <p class="muted">
+          Each thread sends one request and has a unique <code>X-Client-Id</code>. This proves
+          staged client arrival volume, not 10,000 simultaneous sustained connections. Different
+          ramp periods also mean throughput values are not directly comparable capacity benchmarks.
+        </p>
+        <p>
+          <a href="../../tests/jmeter/results/1-users-report/index.html">x1</a> ·
+          <a href="../../tests/jmeter/results/10-users-report/index.html">x10</a> ·
+          <a href="../../tests/jmeter/results/100-users-report/index.html">x100</a> ·
+          <a href="../../tests/jmeter/results/1000-users-report/index.html">x1,000</a> ·
+          <a href="../../tests/jmeter/results/10000-users-report/index.html">x10,000</a>
+        </p>
+      </section>
+
+      <section class="card section">
+        <h2>Commands for the video</h2>
+        <h3>Playwright — safe isolated run</h3>
+        <pre><code>docker compose stop frontend api rss-client
+npm run test:e2e
+npm run test:e2e:report
+docker compose start api frontend rss-client</code></pre>
+        <h3>JMeter — run all five stages</h3>
+        <pre><code>docker compose up --build -d
+jmeter --version
+powershell -ExecutionPolicy Bypass -File tests/jmeter/run-stages.ps1 -RunLabel "ec2-final"</code></pre>
+        <p class="muted">
+          The full JMeter run takes about 13 minutes and should be completed before recording.
+          During the video, open the retained reports instead of rerunning it.
+        </p>
+        <h3>Open retained evidence</h3>
+        <pre><code>Start-Process .\docs\testing\ASSESSMENT_TEST_EVIDENCE.html
+Start-Process .\playwright-report\index.html
+Start-Process .\tests\jmeter\results\10000-users-report\index.html
+Start-Process .\docs\testing\results\lighthouse-dashboard-after.report.html
+Start-Process .\docs\testing\results\lighthouse-rss-client-after.report.html</code></pre>
+      </section>
+
+      <section class="card section">
+        <h2>Ten priority improvements</h2>
+        <ol>
+          <li>
+            Count and group actual clients by <code>clientId</code>; keep Browser/JMeter/etc. as a
+            separate access-method dimension.
+          </li>
+          <li>
+            Deploy to EC2, verify public routing and <code>/health</code>, then capture
+            restart/persistence evidence.
+          </li>
+          <li>
+            Commit the current work on focused branches and finish with a clean
+            <code>main</code> worktree.
+          </li>
+          <li>
+            Create the final ZIP from tracked source so <code>node_modules</code>,
+            <code>.next</code>, secrets and bulky raw reports are excluded.
+          </li>
+          <li>
+            Add a sustained-load JMeter profile with a hold period/loops so concurrency capacity is
+            measured separately from client arrivals.
+          </li>
+          <li>
+            Profile the x10,000 bottleneck and add bounded request logging, SQLite
+            busy-timeout/batching or a queued metrics writer.
+          </li>
+          <li>
+            Repeat the staged test on the final EC2 instance and compare it with local results using
+            identical parameters.
+          </li>
+          <li>
+            Publish Playwright, Lighthouse and compact JMeter summaries as CI artifacts for
+            reproducible evidence.
+          </li>
+          <li>
+            Add focused negative Playwright cases for empty, missing and failed feeds and verify the
+            resulting warning/alert UI.
+          </li>
+          <li>
+            Record a rehearsed 3–8 minute video showing face, voice, student ID, live data flow,
+            alerts, tests, Lighthouse, GitHub and EC2.
+          </li>
+        </ol>
+      </section>
+      <footer>
+        Generated from Playwright 1.62.1, Apache JMeter 5.6.3, Temurin Java 17.0.20 and the supplied
+        CSE5006 rubric. Raw reports remain local and are intentionally ignored by Git.
+      </footer>
+    </main>
+  </body>
+</html>

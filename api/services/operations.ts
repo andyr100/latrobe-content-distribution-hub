@@ -11,6 +11,32 @@ import {
 } from "@/models";
 
 const MAX_CLIENT_ID = 100;
+export type RssClientType = "browser" | "mobile_app" | "rss_reader" | "jmeter" | "direct";
+
+export function classifyRssClient(request: Request): RssClientType {
+  const declared = request.headers.get("x-client-source")?.trim().toLowerCase() ?? "";
+  const agent = request.headers.get("user-agent")?.trim().toLowerCase() ?? "";
+  const value = `${declared} ${agent}`;
+  if (value.includes("jmeter")) return "jmeter";
+  if (
+    declared === "rss-client" ||
+    value.includes("rss-reader") ||
+    value.includes("feedreader") ||
+    value.includes("feedly") ||
+    value.includes("newsblur")
+  )
+    return "rss_reader";
+  if (value.includes("mobile") || value.includes("android") || value.includes("iphone"))
+    return "mobile_app";
+  if (
+    declared === "browser" ||
+    value.includes("mozilla/") ||
+    value.includes("chrome/") ||
+    value.includes("safari/")
+  )
+    return "browser";
+  return "direct";
+}
 
 export function requestIdentity(request: Request) {
   const rawClientId = request.headers.get("x-client-id")?.trim();
@@ -19,7 +45,7 @@ export function requestIdentity(request: Request) {
     : "anonymous";
   return {
     clientId: clientId || "anonymous",
-    source: request.headers.get("x-client-source")?.trim().slice(0, 50) || "direct",
+    clientType: classifyRssClient(request),
     userAgent: request.headers.get("user-agent")?.trim().slice(0, 500) || null,
     requestedRssUserId: request.headers.get("x-rss-user-id")?.trim().slice(0, 100) || null,
   };
@@ -38,8 +64,17 @@ type Observation = ReturnType<typeof requestIdentity> & {
 function statusFor(observation: Observation): FeedStatus {
   if (observation.statusCode >= 500) return "ERROR";
   if (observation.statusCode >= 400) return "WARNING";
-  if ((observation.itemCount ?? 0) === 0) return "EMPTY";
+  if (observation.durationMs >= 300 || (observation.itemCount ?? 0) === 0) return "WARNING";
   return "HEALTHY";
+}
+
+function diagnosticFor(status: FeedStatus, observation: Observation) {
+  if (observation.message) return observation.message;
+  if ((observation.itemCount ?? 0) === 0) return "The RSS feed returned no published items.";
+  if (status === "WARNING" && observation.durationMs >= 300)
+    return "Feed responding with elevated latency.";
+  if (status === "HEALTHY") return "Feed responding normally.";
+  return `RSS request returned HTTP ${observation.statusCode}.`;
 }
 
 function alertDetails(status: FeedStatus, observation: Observation) {
@@ -74,6 +109,59 @@ async function incrementCompatibilityCounter(transaction: Transaction) {
   await counter.increment("count", { by: 1, transaction });
 }
 
+export async function recordFeedHealthObservation(
+  observation: Pick<
+    Observation,
+    "feedId" | "statusCode" | "durationMs" | "itemCount" | "message"
+  > & {
+    feedId: string;
+    requestedAt?: Date;
+  },
+) {
+  const requestedAt = observation.requestedAt ?? new Date();
+  const status = statusFor({
+    ...observation,
+    clientId: "health-check",
+    clientType: "direct",
+    userAgent: null,
+    requestedRssUserId: null,
+    endpoint: "/health/rss/check",
+  });
+  const message = diagnosticFor(status, observation as Observation);
+  await sequelize.transaction(async (transaction) => {
+    await FeedStatusEvent.create(
+      {
+        feedId: observation.feedId,
+        status,
+        itemCount: observation.itemCount ?? 0,
+        httpStatus: observation.statusCode,
+        latencyMs: Math.max(0, Math.round(observation.durationMs)),
+        message,
+        checkedAt: requestedAt,
+      },
+      { transaction },
+    );
+    const alert = alertDetails(status, { ...observation, message } as Observation);
+    if (!alert) return;
+    const existing = await Alert.findOne({
+      where: { feedId: observation.feedId, type: alert.type, resolved: false },
+      transaction,
+    });
+    if (!existing)
+      await Alert.create(
+        {
+          feedId: observation.feedId,
+          type: alert.type,
+          severity: alert.severity,
+          message: alert.message,
+          resolved: false,
+          resolvedAt: null,
+        },
+        { transaction },
+      );
+  });
+}
+
 export async function recordRssObservation(observation: Observation) {
   const success = observation.statusCode >= 200 && observation.statusCode < 400;
   const requestedAt = observation.requestedAt ?? new Date();
@@ -85,6 +173,7 @@ export async function recordRssObservation(observation: Observation) {
     await RequestLog.create(
       {
         clientId: observation.clientId,
+        clientType: observation.clientType,
         rssUserId,
         feedId: observation.feedId,
         endpoint: observation.endpoint,
@@ -94,7 +183,7 @@ export async function recordRssObservation(observation: Observation) {
         durationMs: Math.max(0, Math.round(observation.durationMs)),
         requestedAt,
         userAgent: observation.userAgent,
-        source: observation.source,
+        source: null,
       },
       { transaction },
     );
@@ -108,7 +197,7 @@ export async function recordRssObservation(observation: Observation) {
           itemCount: observation.itemCount ?? 0,
           httpStatus: observation.statusCode,
           latencyMs: Math.max(0, Math.round(observation.durationMs)),
-          message: observation.message ?? null,
+          message: diagnosticFor(status, observation),
           checkedAt: requestedAt,
         },
         { transaction },
