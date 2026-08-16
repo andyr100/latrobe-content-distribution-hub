@@ -58,6 +58,16 @@ Show EC2 URLs, `docker compose ps` in the EC2 VS Code terminal, GitHub commits, 
 
 “In summary, this submission demonstrates persistent RSS data, observable server behaviour, realistic warning states, server and client end-to-end workflows, staged load evidence in local and EC2 environments, and accessibility improvements. It is ready to extend into the Assessment 4 live presentation.”
 
+## Optional 20-second OpenTelemetry segment (use only if the profile is running)
+
+Use this in place of the final part of the **1:10-1:50 Observability and resilience** section. Show Jaeger at `http://localhost:16686` and Prometheus at `http://localhost:9090` through the SSH tunnel.
+
+“Hub Intelligence is the assessed, database-backed operational view. OpenTelemetry is the optional infrastructure layer. The API creates trace spans for requests; the OpenTelemetry Collector receives them, Jaeger shows the end-to-end request trace and timing, and Prometheus exposes aggregated span metrics such as request-call counts.”
+
+“On EC2 I start the optional observability profile, make a health or RSS request, then select `latrobe-content-api` in Jaeger. That shows the request trace. In Prometheus I query `traces_span_metrics_calls_total`, which shows the aggregated calls captured from those spans. I access both safely through SSH port forwarding rather than opening additional public EC2 ports.”
+
+Show one API request in Jaeger, then the Prometheus query result. State that this complements, rather than replaces, the persisted Hub Intelligence metrics.
+
 ## Commands beside the recording
 
 ```powershell
@@ -75,11 +85,31 @@ docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.ov
 curl http://127.0.0.1:4080/health
 ```
 
+```bash
+# EC2: start optional OpenTelemetry, Jaeger and Prometheus profile
+cd ~/latrobe-content-distribution-hub
+sudo docker compose --env-file ec2.env \
+  -f docker-compose.yml \
+  -f docker-compose.ec2.override.yml \
+  -f docker-compose.observability.yml \
+  --profile observability up --build -d
+curl http://127.0.0.1:4080/health
+curl http://127.0.0.1:4080/rss/CLOUDDEVOPS -H "X-Client-Id: otel-demo"
+```
+
+```powershell
+# Local PowerShell: private access to the EC2 observability UIs
+ssh -N -L 16686:127.0.0.1:16686 -L 9090:127.0.0.1:9090 latrobe-content-hub
+# Then open http://localhost:16686 and http://localhost:9090
+# Prometheus query: traces_span_metrics_calls_total
+```
+
 ## Final recording checklist
 
 - Face, voice and student ID visible in the opening.
 - GitHub homepage and meaningful commits visible.
 - EC2 Dashboard, RSS Client, Hub Intelligence, health endpoint and Docker status shown.
+- If the optional profile is running: Jaeger trace and Prometheus span-metric query shown.
 - Playwright EC2 report, JMeter EC2 x10,000 report and Lighthouse reports shown.
 - Explain the local/EC2 JMeter difference and its methodology qualification honestly.
 - Do not expose AWS passwords, keys, PEM contents or unrelated personal data.
