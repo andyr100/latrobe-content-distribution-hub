@@ -161,10 +161,10 @@ Do not claim an unexecuted JMeter stage or Lighthouse result. Keep the raw gener
 
 ### Verified assessment evidence — 16 August 2026
 
-- Playwright: **3/3 passed in 22.9 seconds**, covering the server CRUD/RSS journey, separate RSS Client/mock LMS journey, and Hub Intelligence reporting journey.
-- JMeter: all required x1, x10, x100, x1,000 and x10,000 stages were executed. x1 through x1,000 had **0% errors**. The x10,000 local stage saturated the single API/SQLite instance: **9,971/10,000 errors (99.71%)**, predominantly 30-second timeouts. The API became unhealthy and recovered to `200 OK` about six seconds after an API-only container restart; the database volume was retained.
+- Playwright: **3/3 passed in 22.9 seconds locally** and **3/3 passed in 7.8 seconds on EC2**, covering the server CRUD/RSS journey, separate RSS Client/mock LMS journey, and Hub Intelligence reporting journey.
+- JMeter: the EC2 staged test completed x1, x10, x100, x1,000 and x10,000 request levels with **0% errors**. At x10,000 it recorded a **18.99 ms average**, **17 ms median**, **25 ms p95**, **242 ms maximum** and **16.67 requests/sec**. It was generated on the EC2 host against the deployed API, so it demonstrates server-side staged load rather than 10,000 simultaneous Internet clients. The earlier local x10,000 run saturated the local single API/SQLite instance (9,971/10,000 errors); this limitation and the deployment comparison are retained in the combined report.
 - Lighthouse: Dashboard accessibility improved from **96 to 100** after correcting primary-link contrast; the RSS Client remained **100 before and after**.
-- Rubric estimate: **22/25 (88%)** before EC2 deployment, the final video, clean-branch packaging, and correction of the current client metric semantics. The current queries count access methods (`clientType`) where the rubric asks for distinct technical clients (`clientId`).
+- Rubric audit: the objective evidence and remaining limitations are documented in the combined HTML report. The final grade is the assessor's decision; one known semantic improvement is to count distinct technical clients (`clientId`) rather than only access methods (`clientType`).
 
 Open the combined, video-ready evidence page with:
 
@@ -172,7 +172,7 @@ Open the combined, video-ready evidence page with:
 Start-Process .\docs\testing\ASSESSMENT_TEST_EVIDENCE.html
 ```
 
-Raw Playwright and JMeter reports are intentionally ignored by Git but remain available locally at `playwright-report/index.html` and `tests/jmeter/results/*-users-report/index.html`. The combined HTML retains the measured summary, objective rubric breakdown, limitations, commands, and ten priority improvements.
+Raw reports are intentionally ignored by Git but remain available locally at `playwright-report/index.html`, `playwright-report-ec2/index.html`, `tests/jmeter/results/*-users-report/index.html`, and `tests/jmeter/results/ec2-final-20260816/*`. The combined HTML retains the measured summary, objective rubric breakdown, limitations, commands, and priority improvements.
 
 Accessibility remains part of the shared UI design: semantic headings and tables, labelled controls and status text, keyboard-visible focus, modal focus management, reduced-motion support, responsive layouts, and chart data available without relying on colour or graphics alone.
 
@@ -186,13 +186,22 @@ Jaeger is at http://localhost:16686 and Prometheus at http://localhost:9090. Thi
 
 ## EC2 deployment
 
-**Current status: pending by design.** Local implementation and evidence are being completed first. When the final commit passes, copy `ec2.env.example` to `ec2.env`, replace the placeholder host, and deploy:
+**Deployment status: verified on EC2.** The instance may be stopped between demonstrations to preserve AWS Academy credits. After a stop/start, AWS normally assigns a new public IPv4 address unless the instance uses an Elastic IP. Use the placeholder `EC2_MACHINE_IP` below instead of recording a fixed address.
+
+Set the current address before connecting or testing from PowerShell:
 
 ```powershell
-docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.override.yml up --build -d
+$env:EC2_MACHINE_IP = "CURRENT_EC2_PUBLIC_IPV4"
+ssh -i C:\path\to\content-hub-ec2.pem ec2-user@$env:EC2_MACHINE_IP
 ```
 
-The EC2 override publishes the frontend on TCP 80, API on TCP 4080, and the standalone RSS Client on TCP 5000 for assessment viewing. In the EC2 security group, allow SSH 22 only from your IP, HTTP 80 from viewers, 4080 where the browser needs direct API access, and 5000 where the RSS Client must be viewed. Do not open all ports or expose SQLite. For production beyond assessment viewing, place the API and RSS Client behind an HTTPS reverse proxy and restrict direct ports.
+On EC2, copy `ec2.env.example` to `ec2.env` and replace each `EC2_MACHINE_IP` placeholder with the instance's current public IPv4 address. Then deploy:
+
+```powershell
+sudo docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.override.yml up --build -d
+```
+
+Public demonstration URLs are `http://EC2_MACHINE_IP/`, `http://EC2_MACHINE_IP:5000/`, and `http://EC2_MACHINE_IP:4080/health`. The EC2 override publishes the frontend on TCP 80, API on TCP 4080, and the standalone RSS Client on TCP 5000 for assessment viewing. In the EC2 security group, allow SSH 22 only from your IP, HTTP 80 from viewers, 4080 where the browser needs direct API access, and 5000 where the RSS Client must be viewed. Do not open all ports or expose SQLite. For production beyond assessment viewing, place the API and RSS Client behind an HTTPS reverse proxy and restrict direct ports.
 
 ## Evidence and video
 

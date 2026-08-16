@@ -6,13 +6,13 @@ Target length: 4:45 to 5:15. Speak naturally; do not claim anything not shown. K
 
 “Hi, I’m [name], student ID [ID]. This is my CSE5006 Assessment 3 submission: the La Trobe Content Distribution Hub. It extends the RSS Server and mock LMS client with persistent reporting, observability, automated testing and a final EC2 deployment.”
 
-Show the GitHub repository homepage, then the EC2 frontend at `http://3.91.21.111`.
+Show the GitHub repository homepage, then the EC2 frontend at `http://EC2_MACHINE_IP`. Before recording, replace `EC2_MACHINE_IP` with the instance's current Public IPv4 address (or use its Elastic IP/DNS name if one is configured).
 
 ## 0:20–1:10 — Data-driven dashboard and persistence
 
 “The dashboard is data-driven, not mock charts. The API persists posts, feeds, authors, RSS users, request logs, feed-status events and alerts in SQLite through Sequelize. These cards and charts aggregate those records into request totals, feed demand, client activity, latency, health and warnings.”
 
-Show Dashboard KPI cards, rankings, health status, alert, recent requests and one chart. Open the RSS Client at `http://3.91.21.111:5000`, choose a mock LMS user and a channel, then return to the dashboard after refresh.
+Show Dashboard KPI cards, rankings, health status, alert, recent requests and one chart. Open the RSS Client at `http://EC2_MACHINE_IP:5000`, choose a mock LMS user and a channel, then return to the dashboard after refresh.
 
 “The RSS Client sends a stable technical client ID and selected RSS user. Its feed request is recorded, so this interaction changes the persisted monitoring data. The RSS client is a separate deployed service on port 5000; its API calls remain server-side to the RSS API.”
 
@@ -22,7 +22,7 @@ Open Hub Intelligence and filter by time, RSS user, channel and result. Expand a
 
 “Hub Intelligence provides the detailed reporting view: filterable persisted evidence, pagination, request rate, latency, feed status and alerts. The API health endpoint reports application status, SQLite connectivity and feed count. JMeter load-generator traffic is deliberately stored for load evidence but excluded from Hub Intelligence, so synthetic test traffic does not distort normal operational reporting.”
 
-Show `http://3.91.21.111:4080/health`, then a warning/alert and its resolution if available.
+Show `http://EC2_MACHINE_IP:4080/health`, then a warning/alert and its resolution if available.
 
 ## 1:50–2:35 — Playwright evidence
 
