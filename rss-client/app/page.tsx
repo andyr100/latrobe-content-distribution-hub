@@ -17,6 +17,15 @@ const AUTO_REFRESH_DEFAULT =
   process.env.NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED?.toLowerCase() !== "false";
 const CLIENT_ID_KEY = "latrobe-rss-client.id.v1";
 
+function createClientId() {
+  if (typeof window.crypto?.randomUUID === "function") {
+    return `rss-client-${window.crypto.randomUUID()}`;
+  }
+
+  const randomPart = Math.random().toString(36).slice(2);
+  return `rss-client-${Date.now().toString(36)}-${randomPart}`;
+}
+
 function text(element: Element, selector: string) {
   return element.querySelector(selector)?.textContent?.trim() ?? "";
 }
@@ -41,7 +50,7 @@ export default function RssClientPage() {
 
   useEffect(() => {
     const existing = window.localStorage.getItem(CLIENT_ID_KEY);
-    const next = existing || `rss-client-${crypto.randomUUID()}`;
+    const next = existing || createClientId();
     if (!existing) window.localStorage.setItem(CLIENT_ID_KEY, next);
     const timer = window.setTimeout(() => setClientId(next), 0);
     return () => window.clearTimeout(timer);
