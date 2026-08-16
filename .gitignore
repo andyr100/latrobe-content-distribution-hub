@@ -20,6 +20,9 @@ docs/testing/results/
 jmeter.log
 /.tools/
 /api/tests/.playwright.sqlite*
+/api/tests/*.sqlite*
+/frontend/AGENTS.md
+/frontend/CLAUDE.md
 
 # next.js
 .next/
