@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const apiBase = "http://127.0.0.1:4000";
+const apiBase = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:4000";
 
 test("mock LMS loads a newly published post from its RSS feed", async ({ page, request }) => {
   const marker = `Playwright LMS item ${Date.now()}`;

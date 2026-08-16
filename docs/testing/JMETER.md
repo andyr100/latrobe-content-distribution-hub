@@ -10,6 +10,13 @@ The first run writes directly under `tests/jmeter/results/`. Preserve it and giv
 powershell -ExecutionPolicy Bypass -File tests/jmeter/run-stages.ps1 -RunLabel "ec2-final"
 ```
 
+On the EC2 Linux host, use the equivalent Bash runner against the deployed API:
+
+```bash
+chmod +x tests/jmeter/run-stages.sh
+RUN_LABEL=ec2-final HOST_NAME=127.0.0.1 PORT=4080 tests/jmeter/run-stages.sh
+```
+
 For each generated HTML report, record the actual sample count, average, median, 90th/95th percentile, throughput, error percentage, and maximum response time. Preserve failures and resource limits honestly. The repository does not contain invented performance numbers.
 
 On 16 August 2026, the complete x1/x10/x100/x1,000/x10,000 sequence was executed locally with Apache JMeter 5.6.3 and Temurin Java 17. x1 through x1,000 completed with 0% errors. At x10,000, 9,971 of 10,000 samples timed out (99.71%), the API became unhealthy, and an API-only restart restored `/health` in about six seconds without deleting the database volume. This is valid measured capacity evidence, not a successful x10,000 performance claim. See [VALIDATION.md](../../tests/jmeter/VALIDATION.md) and the video-ready [combined HTML evidence](ASSESSMENT_TEST_EVIDENCE.html).

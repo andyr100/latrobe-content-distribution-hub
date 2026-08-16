@@ -26,4 +26,14 @@ The suite deliberately refuses to reuse services already occupying ports 3000, 4
 
 Verified on 16 August 2026: **3/3 tests passed in 22.9 seconds**.
 
+To run the same workflows from the EC2 host against its deployed services (rather than the isolated local-development services), use the EC2 configuration. The created test posts are still deleted by the tests:
+
+```bash
+PLAYWRIGHT_API_BASE_URL=http://127.0.0.1:4080 \
+HUB_API_BASE_URL=http://127.0.0.1:4080 \
+HUB_FRONTEND_BASE_URL=http://127.0.0.1 \
+PLAYWRIGHT_RSS_CLIENT_BASE_URL=http://127.0.0.1:5000 \
+npx playwright test --config=playwright.ec2.config.ts
+```
+
 Do not claim a passing result in the assessment video until the suite has actually run on the demonstration machine.
