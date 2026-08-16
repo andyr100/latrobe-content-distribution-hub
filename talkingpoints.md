@@ -1,84 +1,86 @@
-# Assessment 3 video talking points
+# Assessment 3 video script — 5 minutes
 
-Target: about seven minutes. Record only evidence that was actually executed.
+Target length: 4:45 to 5:15. Speak naturally; do not claim anything not shown. Keep your face, voice and student ID visible during the opening.
 
-## 0:00-0:30 - Introduction
+## 0:00–0:20 — Introduction
 
-- Show the repository and explain the Assessment 1/2 continuity: publishing, SQLite, RSS Server, and separate mock LMS client.
-- State the Assessment 3 focus: persistent operational data, reporting, testing, and observability.
-- State clearly that this recording follows the final EC2 deployment; the 16 August evidence was first collected locally while implementation was being completed.
+“Hi, I’m [name], student ID [ID]. This is my CSE5006 Assessment 3 submission: the La Trobe Content Distribution Hub. It extends the RSS Server and mock LMS client with persistent reporting, observability, automated testing and a final EC2 deployment.”
 
-## 0:30-1:40 - Live Dashboard
+Show the GitHub repository homepage, then the EC2 frontend at `http://3.91.21.111`.
 
-- Open the Dashboard and identify the six KPI cards, time-based activity, feed/client rankings, statuses, alerts, and recent requests.
-- Explain that every value is aggregated from `RequestLog`, `FeedStatusEvent`, and `Alert` records.
-- Select a Channel in the RSS Client, return to the Dashboard after refresh, and show the request/client values change.
+## 0:20–1:10 — Data-driven dashboard and persistence
 
-## 1:40-2:30 - RSS identity and persistence
+“The dashboard is data-driven, not mock charts. The API persists posts, feeds, authors, RSS users, request logs, feed-status events and alerts in SQLite through Sequelize. These cards and charts aggregate those records into request totals, feed demand, client activity, latency, health and warnings.”
 
-- Show the shortened stable client ID in the RSS Client.
-- Open the database inspector and show the corresponding request record, status event, duration, result, and timestamp.
-- Restart the API container and show that the values remain.
+Show Dashboard KPI cards, rankings, health status, alert, recent requests and one chart. Open the RSS Client at `http://3.91.21.111:5000`, choose a mock LMS user and a channel, then return to the dashboard after refresh.
 
-## 2:30-3:15 - Hub Intelligence and alerts
+“The RSS Client sends a stable technical client ID and selected RSS user. Its feed request is recorded, so this interaction changes the persisted monitoring data. The RSS client is a separate deployed service on port 5000; its API calls remain server-side to the RSS API.”
 
-- Open Hub Intelligence, apply time, author, RSS student, Channel, result and source filters, then compare charts with paginated evidence.
-- Show accessible table equivalents for charts.
-- Resolve the deterministic demonstration warning and show its state update.
+## 1:10–1:50 — Observability and resilience
 
-## 3:15-4:15 - Playwright
+Open Hub Intelligence and filter by time, RSS user, channel and result. Expand and collapse the request-log section.
 
-- Show `playwright-report/index.html` and the **3/3 passed in 22.9 seconds** result. If demonstrating a fresh run, stop `frontend`, `api`, and `rss-client`, run `npm run test:e2e`, then restart the containers so the isolated SQLite database is guaranteed.
-- Explain the server CRUD-to-RSS journey and separate RSS Client selection/rendering journey.
-- Mention that Playwright uses an isolated SQLite database and does not alter demo data.
+“Hub Intelligence provides the detailed reporting view: filterable persisted evidence, pagination, request rate, latency, feed status and alerts. The API health endpoint reports application status, SQLite connectivity and feed count. JMeter load-generator traffic is deliberately stored for load evidence but excluded from Hub Intelligence, so synthetic test traffic does not distort normal operational reporting.”
 
-## 4:15-5:15 - JMeter
+Show `http://3.91.21.111:4080/health`, then a warning/alert and its resolution if available.
 
-- Open `tests/jmeter/rss-load-test.jmx` and show parameterised users, ramp-up, loops, unique client IDs, and RSS assertions.
-- Open `docs/testing/ASSESSMENT_TEST_EVIDENCE.html`. State that all five required stages ran: x1, x10, x100 and x1,000 had 0% errors; x10,000 produced 9,971/10,000 timeouts (99.71%), left the API unhealthy, and required an API-only restart. The database volume remained intact and `/health` returned 200 about six seconds after restart.
-- Explain that one request per gradually started thread measures distinct-client arrival volume, not 10,000 simultaneous sustained connections. Different ramp durations mean the throughput figures are not direct capacity comparisons.
-- Point to `docs/testing/JMETER.md` for the repeatable runner and resource safeguards.
+## 1:50–2:35 — Playwright evidence
 
-## 5:15-5:50 - Lighthouse
+Open `docs/testing/ASSESSMENT_TEST_EVIDENCE.html`, then `playwright-report-ec2/index.html`.
 
-- Show the saved before and after HTML reports generated by `npm run test:a11y` or the labelled runner.
-- Identify the corrected contrast issue and the final accessibility score for both browser applications.
+“Playwright was rerun from EC2 against the deployed services. All three Chromium tests passed in 7.8 seconds. The server test performs real RSS post CRUD: create, read, update, publish through RSS, delete and verify deletion. The client test creates a post, selects a mock LMS user and channel, and proves the RSS item renders. The third test verifies Hub Intelligence filters, charts, pagination and collapsible evidence. Test posts are deleted in finally blocks, preserving the demonstration data.”
 
-## 5:50-6:30 - Docker and observability
+“For comparison, the original local isolated run also passed 3 out of 3, in 22.9 seconds. The two timings are not a benchmark because the local run used development services and an isolated database, while the final run used deployed EC2 services.”
 
-- Show healthy Compose services and `/health`, including version, uptime, database state, and feed count.
-- If the optional profile is running, find a `latrobe-content-api` trace in Jaeger and query `traces_span_metrics_calls_total` in Prometheus.
-- Explain that telemetry is opt-in and complements rather than replaces assessed database metrics.
+## 2:35–3:35 — JMeter local versus EC2 evidence
 
-## 6:30-7:00 - Git and conclusion
+Keep the comparison page open and scroll to the JMeter table. Open the EC2 x10,000 report in a second tab.
 
-- Show the milestone feature branches, focused commits, and successful quality workflow.
-- Show a clean `git status`, the GitHub homepage, and the EC2 URL. Summarise backwards compatibility, persistent data, automated evidence, measured local capacity limits, and Assessment 4 readiness.
+“The JMeter plan uses the required staged levels: 1, 10, 100, 1,000 and 10,000 virtual RSS clients. Every thread sends a unique client ID, requests a real RSS feed and asserts HTTP 200 plus RSS XML.”
 
-## Commands to keep beside the recording
+“The local baseline passed through 1,000 clients but at 10,000 it recorded 9,971 timeouts, or 99.71 percent errors, and required an API-only restart. I preserved that limitation rather than hiding it.”
+
+“I then ran exactly the staged plan on the final EC2 Linux deployment. All five EC2 stages completed with zero errors. At 10,000 staged clients the average was 18.99 milliseconds, median 17 milliseconds, P95 25 milliseconds, maximum 242 milliseconds and throughput 16.67 requests per second; the API health check remained healthy.”
+
+“The comparison is intentionally qualified: JMeter was co-located on EC2 and each thread sends one gradually ramped request, so this proves staged distinct-client arrival volume, not 10,000 simultaneous sustained internet users. A future sustained-load profile with a hold period is the next engineering step.”
+
+## 3:35–4:10 — Accessibility
+
+Open the saved Lighthouse dashboard and RSS Client reports.
+
+“I evaluated accessibility with Lighthouse. The dashboard improved from 96 to 100 after I corrected primary-link contrast. The RSS Client remained 100. This affected the final design through contrast-safe interactive elements, labels for selectors, visible focus and accessible chart/table alternatives.”
+
+## 4:10–4:45 — Deployment, code quality and conclusion
+
+Show EC2 URLs, `docker compose ps` in the EC2 VS Code terminal, GitHub commits, then `git status`.
+
+“The final system is deployed in Docker on EC2: frontend on port 80, API on 4080 and the standalone RSS Client on 5000. SQLite is a private named Docker volume. The code is modular across frontend, API, RSS client and shared contracts, and the commit history records the EC2 deployment, RSS-client HTTP fix and EC2 test paths.”
+
+“In summary, this submission demonstrates persistent RSS data, observable server behaviour, realistic warning states, server and client end-to-end workflows, staged load evidence in local and EC2 environments, and accessibility improvements. It is ready to extend into the Assessment 4 live presentation.”
+
+## Commands beside the recording
 
 ```powershell
-# Open the concise results page and full reports; do not rerun the 13-minute load test on camera.
+# Local evidence pages
 Start-Process .\docs\testing\ASSESSMENT_TEST_EVIDENCE.html
-Start-Process .\playwright-report\index.html
-Start-Process .\tests\jmeter\results\10000-users-report\index.html
+Start-Process .\playwright-report-ec2\index.html
+Start-Process .\tests\jmeter\results\ec2-final-20260816\10000-users-report\index.html
 Start-Process .\docs\testing\results\lighthouse-dashboard-after.report.html
-
-# Safe Playwright rerun (uses the isolated SQLite database).
-docker compose stop frontend api rss-client
-npm run test:e2e
-npm run test:e2e:report
-docker compose start api frontend rss-client
-
-# Full staged JMeter rerun before recording, with Java 17+ and JMeter 5.6.3 on PATH.
-docker compose up --build -d
-powershell -ExecutionPolicy Bypass -File tests/jmeter/run-stages.ps1 -RunLabel "ec2-final"
 ```
 
-## Recording checklist
+```bash
+# EC2 status
+cd ~/latrobe-content-distribution-hub
+docker compose --env-file ec2.env -f docker-compose.yml -f docker-compose.ec2.override.yml ps
+curl http://127.0.0.1:4080/health
+```
 
-- Use `docker compose --profile tools run --rm metrics-tools npm run simulate:traffic` before recording if meaningful history is needed.
-- Keep client IDs, ports, and URLs readable; do not expose AWS credentials or secrets.
-- Explain the current metric caveat if it is not fixed before recording: “Active RSS clients” counts access methods rather than distinct technical `clientId` values.
-- Confirm the embedded video path and rebuild the frontend before the final recording check.
-- Tag the reviewed final commit only after all checks pass.
+## Final recording checklist
+
+- Face, voice and student ID visible in the opening.
+- GitHub homepage and meaningful commits visible.
+- EC2 Dashboard, RSS Client, Hub Intelligence, health endpoint and Docker status shown.
+- Playwright EC2 report, JMeter EC2 x10,000 report and Lighthouse reports shown.
+- Explain the local/EC2 JMeter difference and its methodology qualification honestly.
+- Do not expose AWS passwords, keys, PEM contents or unrelated personal data.
+- Submit a source ZIP without `node_modules`, generated reports, `.next`, SQLite data or PEM files.

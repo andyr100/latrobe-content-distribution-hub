@@ -13,6 +13,7 @@ node_modules
 # testing
 /coverage
 /playwright-report/
+/playwright-report-ec2/
 /test-results/
 /tests/jmeter/results/
 docs/testing/results/
