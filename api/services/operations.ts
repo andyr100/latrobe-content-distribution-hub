@@ -164,6 +164,7 @@ export async function recordFeedHealthObservation(
 
 export async function recordRssObservation(observation: Observation) {
   const success = observation.statusCode >= 200 && observation.statusCode < 400;
+  const shouldRecordOperationalState = observation.clientType !== "jmeter";
   const requestedAt = observation.requestedAt ?? new Date();
   const status = statusFor(observation);
   const rssUserId = observation.requestedRssUserId
@@ -189,7 +190,7 @@ export async function recordRssObservation(observation: Observation) {
     );
     if (success) await incrementCompatibilityCounter(transaction);
 
-    if (observation.feedId) {
+    if (shouldRecordOperationalState && observation.feedId) {
       await FeedStatusEvent.create(
         {
           feedId: observation.feedId,
@@ -204,7 +205,7 @@ export async function recordRssObservation(observation: Observation) {
       );
     }
 
-    const alert = alertDetails(status, observation);
+    const alert = shouldRecordOperationalState ? alertDetails(status, observation) : null;
     if (alert) {
       const recentDuplicate = await Alert.findOne({
         where: {

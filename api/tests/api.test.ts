@@ -333,11 +333,26 @@ test("Assessment 3 metrics aggregate persisted RSS operations", async () => {
 });
 
 test("Hub Intelligence aggregates filters and paginates request evidence", async () => {
+  await models.RequestLog.create({
+    clientId: "jmeter-ignored-by-hub-intelligence",
+    clientType: "jmeter",
+    rssUserId: "ava-nguyen",
+    feedId: "hackathons",
+    endpoint: "/rss/HACKATHONS",
+    method: "GET",
+    statusCode: 200,
+    success: true,
+    durationMs: 10,
+    requestedAt: new Date(),
+    userAgent: "ApacheJMeter",
+    source: null,
+  });
   const overview = await json<{
     summary: { totalRequests: number; p95LatencyMs: number };
     requestActivity: Array<{ totalRequests: number }>;
     failedByFeed: Array<{ label: string; value: number }>;
     rssUserDemand: Array<{ label: string; value: number }>;
+    clientDistribution: Array<{ label: string; value: number }>;
   }>(
     await insightOverviewRoute.GET(
       new Request("http://test/api/insights/overview?range=all&rssUserId=ava-nguyen"),
@@ -351,15 +366,17 @@ test("Hub Intelligence aggregates filters and paginates request evidence", async
     overview.data.requestActivity.reduce((sum, item) => sum + Number(item.totalRequests), 0) >= 1,
   );
   assert(overview.data.rssUserDemand.some((item) => item.label === "Ava Nguyen"));
+  assert(!overview.data.clientDistribution.some((item) => item.label === "jmeter"));
   assert(Array.isArray(overview.data.failedByFeed));
   const logsResponse = await insightLogsRoute.GET(
     new Request(
       "http://test/api/insights/request-logs?range=all&page=1&pageSize=20&rssUserId=ava-nguyen",
     ),
   );
-  const logs = await json<Array<{ rssUserId: string | null }>>(logsResponse);
+  const logs = await json<Array<{ rssUserId: string | null; clientType: string }>>(logsResponse);
   assert.equal(logsResponse.status, 200);
   assert(logs.data.every((row) => row.rssUserId === "ava-nguyen"));
+  assert(logs.data.every((row) => row.clientType !== "jmeter"));
   assert.equal(logs.meta?.pageSize, 20);
   const invalid = await insightLogsRoute.GET(
     new Request("http://test/api/insights/request-logs?range=all&pageSize=50"),

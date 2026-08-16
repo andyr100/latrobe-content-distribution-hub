@@ -3,6 +3,8 @@ import { sequelize } from "@/lib/sequelize";
 import { Feed, RssUser, User } from "@/models";
 import { getFeedStatuses, metricRanges, type MetricRange } from "./metrics";
 
+const EXCLUDED_INSIGHT_CLIENT_TYPE = "jmeter";
+
 export type InsightFilters = {
   range: MetricRange;
   feedId?: string;
@@ -58,8 +60,10 @@ function sinceFor(range: MetricRange) {
 }
 
 function requestWhere(filters: InsightFilters, alias = "r") {
-  const clauses: string[] = [];
-  const replacements: Record<string, string | Date | number> = {};
+  const clauses = [`${alias}.clientType <> :excludedInsightClientType`];
+  const replacements: Record<string, string | Date | number> = {
+    excludedInsightClientType: EXCLUDED_INSIGHT_CLIENT_TYPE,
+  };
   const since = sinceFor(filters.range);
   if (since) {
     clauses.push(`${alias}.requestedAt >= :since`);
@@ -318,8 +322,11 @@ export async function getInsightFilterOptions() {
     RssUser.findAll({ attributes: ["id", "name", "role"], order: [["name", "ASC"]] }),
     Feed.findAll({ attributes: ["id", "code", "title"], order: [["title", "ASC"]] }),
     sequelize.query<{ clientType: string }>(
-      "SELECT DISTINCT clientType FROM RequestLogs ORDER BY clientType",
-      { type: QueryTypes.SELECT },
+      "SELECT DISTINCT clientType FROM RequestLogs WHERE clientType <> :excludedInsightClientType ORDER BY clientType",
+      {
+        replacements: { excludedInsightClientType: EXCLUDED_INSIGHT_CLIENT_TYPE },
+        type: QueryTypes.SELECT,
+      },
     ),
   ]);
   return {
