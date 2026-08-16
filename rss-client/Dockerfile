@@ -1,10 +1,10 @@
-FROM node:20.19.5-bookworm-slim AS dependencies
+FROM node:24.14.0-bookworm-slim AS dependencies
 WORKDIR /app
 COPY --from=contracts . /shared
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:20.19.5-bookworm-slim AS builder
+FROM node:24.14.0-bookworm-slim AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 ARG NEXT_PUBLIC_RSS_AUTO_REFRESH_ENABLED=true
@@ -15,7 +15,7 @@ COPY --from=contracts . /shared
 COPY . .
 RUN npm run build
 
-FROM node:20.19.5-bookworm-slim AS runner
+FROM node:24.14.0-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production PORT=5000 HOSTNAME=0.0.0.0
 RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs

@@ -68,7 +68,7 @@ docker compose restart api
 
 ## Start locally without Docker
 
-Use Node.js 20.19.5. Install all dependency sets once:
+Use Node.js 24.14.0. Install all dependency sets once:
 
 ```powershell
 npm ci
